@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js stuff</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000000;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+        <script id="vertex-shader" type="x-shader/x-vertex">
+	        varying vec2 vUv;
+
+	        void main() {
+		        vUv = uv;
+		        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+	        }
+        </script>
+        <script data-src="shader.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
+
+        <script src="js-libs/jquery-2.1.4.min.js"></script>
+		<script src="js-libs/three.min.js"></script>
+        <script src="js-libs/OrbitControls.js"></script>
+        <script src="js-libs/ShaderLoader.min.js"></script>
+		<script src="js-libs/shaders/CopyShader.js"></script>
+		<script src="js-libs/postprocessing/EffectComposer.js"></script>
+		<script src="js-libs/postprocessing/RenderPass.js"></script>
+		<script src="js-libs/postprocessing/ShaderPass.js"></script>
+		<script src="js-libs/postprocessing/MaskPass.js"></script>
+		<script src="main.js"></script>
+		
+	</body>
+</html>
