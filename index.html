@@ -15,11 +15,12 @@
 	<body>
         <script id="vertex-shader" type="x-shader/x-vertex">
 	        varying vec2 vUv;
+			varying vec3 vNormal;
 
 	        void main() {
 		        vUv = uv;
+			    vNormal = normalMatrix * normal;
 		        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
 	        }
         </script>
         <script data-src="shader.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
@@ -34,6 +35,6 @@
 		<script src="js-libs/postprocessing/ShaderPass.js"></script>
 		<script src="js-libs/postprocessing/MaskPass.js"></script>
 		<script src="main.js"></script>
-		
+
 	</body>
 </html>

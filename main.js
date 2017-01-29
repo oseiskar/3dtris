@@ -1,8 +1,8 @@
 var camera, scene, renderer, controls;
 
-var depthMaterial, effectComposer, depthRenderTarget;
-var ssaoPass;
-var depthScale = 1.0;
+var depthMaterial, depthRenderTarget;
+var theShader;
+var meshes;
 
 (function(){
 
@@ -34,6 +34,8 @@ function planeGeometry(sz) {
         new THREE.Face3(0,1,2),
         new THREE.Face3(2,3,0)
         );
+
+    geometry.computeFaceNormals();
 
     return geometry;
 }
@@ -93,7 +95,7 @@ function init(shaders) {
 	camera.position.z = 3;
 	scene = new THREE.Scene();
 
-	THREE.SSAOShader = {
+    theShader = {
 	    uniforms: {
 
 		    "tDiffuse":     { value: null },
@@ -101,7 +103,7 @@ function init(shaders) {
 		    "size":         { value: new THREE.Vector2( 512, 512 ) },
 		    "cameraNear":   { value: 1 },
 		    "cameraFar":    { value: 100 },
-		    "onlyAO":       { value: 0 },
+            "projectionXY": { value: new THREE.Vector2(1, 1) },
 		    "aoClamp":      { value: 0.5 },
 		    "lumInfluence": { value: 0.5 }
 
@@ -111,7 +113,14 @@ function init(shaders) {
 	    fragmentShader: shaders.ssao.fragment
 	};
 
-    generateMeshes().forEach(function(mesh) { scene.add(mesh); });
+    var shaderMaterial = new THREE.ShaderMaterial(theShader);
+
+    meshes = generateMeshes();
+    meshes.forEach(function(mesh) {
+        mesh._shaderMaterial = shaderMaterial;
+        mesh._originalMaterial = mesh.material;
+        scene.add(mesh);
+    });
 
 	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
@@ -154,8 +163,19 @@ function onWindowResize() {
 	var newWidth  = Math.floor( width / pixelRatio ) || 1;
 	var newHeight = Math.floor( height / pixelRatio ) || 1;
 	depthRenderTarget.setSize( newWidth, newHeight );
-	effectComposer.setSize( newWidth, newHeight );
 
+    updateUniforms();
+
+	//effectComposer.setSize( newWidth, newHeight );
+}
+
+function updateUniforms() {
+    theShader.uniforms.size.value.set( window.innerWidth, window.innerHeight );
+    theShader.uniforms.projectionXY.value.set(
+        camera.projectionMatrix.elements[0],
+        camera.projectionMatrix.elements[5]);
+
+    console.log(theShader.uniforms);
 }
 
 function initPostprocessing() {
@@ -171,22 +191,19 @@ function initPostprocessing() {
 	var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
 	depthRenderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
 
-	// Setup SSAO pass
-	ssaoPass = new THREE.ShaderPass( THREE.SSAOShader );
-	ssaoPass.renderToScreen = true;
 	//ssaoPass.uniforms[ "tDiffuse" ].value will be set by ShaderPass
-	ssaoPass.uniforms[ "tDepth" ].value = depthRenderTarget.texture;
-	ssaoPass.uniforms[ 'size' ].value.set( window.innerWidth, window.innerHeight );
-	ssaoPass.uniforms[ 'cameraNear' ].value = camera.near;
-	ssaoPass.uniforms[ 'cameraFar' ].value = camera.far;
-	ssaoPass.uniforms[ 'onlyAO' ].value = false; //( postprocessing.renderMode == 1 );
-	ssaoPass.uniforms[ 'aoClamp' ].value = 0.3;
-	ssaoPass.uniforms[ 'lumInfluence' ].value = 0.5;
+	theShader.uniforms.tDepth.value = depthRenderTarget.texture;
+	theShader.uniforms.cameraNear.value = camera.near;
+	theShader.uniforms.cameraFar.value = camera.far;
+	theShader.uniforms.aoClamp.value = 0.3;
+	theShader.uniforms.lumInfluence.value = 0.5;
+
+    updateUniforms();
 
 	// Add pass to effect composer
-	effectComposer = new THREE.EffectComposer( renderer );
-	effectComposer.addPass( renderPass );
-	effectComposer.addPass( ssaoPass );
+	//effectComposer = new THREE.EffectComposer( renderer );
+	//effectComposer.addPass( renderPass );
+	//effectComposer.addPass( ssaoPass );
 
 }
 
@@ -196,13 +213,18 @@ function render() {
 	group.rotation.x = timer * 0.0002;
 	group.rotation.y = timer * 0.0001;*/
 
+    meshes.forEach(function(mesh) {mesh.material = mesh._originalMaterial;});
 	// Render depth into depthRenderTarget
 	scene.overrideMaterial = depthMaterial;
 	renderer.render( scene, camera, depthRenderTarget, true );
 
 	// Render renderPass and SSAO shaderPass
 	scene.overrideMaterial = null;
-	effectComposer.render();
+
+    meshes.forEach(function(mesh) {mesh.material = mesh._shaderMaterial;});
+
+	renderer.render( scene, camera );
 
 
+	//effectComposer.render();
 }
