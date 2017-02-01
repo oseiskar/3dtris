@@ -10,17 +10,18 @@ uniform vec2 projectionXY;
 
 varying vec2 vUv;
 varying vec3 vNormal;
+varying vec3 vScreenNormal;
 
 //#define DL 2.399963229728653
 //#define EULER 2.718281828459045
 
 #define M_PI 3.1415926535897932384626433832795
 
-const int samples = 64;
-const float radius = 0.05;
-const float farClip = 0.3;
+const int samples = 32;
+const float radius = 0.04;
+const float farClip = 0.2;
 
-const float intensity = 1.0; //2.0;
+const float intensity = 1.0;
 
 #include <packing>
 
@@ -59,7 +60,7 @@ void main() {
     float ao = 0.0;
     float dl = sqrt(M_PI * float(samples));
 
-    vec3 zVec = normalize(vNormal);
+    vec3 zVec = vScreenNormal;
     vec3 xVec = normalize(cross(zVec, vec3(noise1.x, noise1.y, 0)));
     vec3 yVec = cross(zVec, xVec);
 
@@ -93,7 +94,10 @@ void main() {
     vec3 luminance = vec3( lum );
     vec3 final = vec3( color * mix( vec3( ao ), vec3( 1.0 ), luminance * lumInfluence ) );*/
 
-    vec3 final = color * ao;
+    float diffIntensity = 0.3;
+    float diffuse = dot(vNormal, normalize(vec3(-1,5,3))) * diffIntensity + (1.-diffIntensity);
+
+    vec3 final = color * ao * diffuse;
 
     gl_FragColor = vec4( final, 1.0 );
 }

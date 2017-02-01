@@ -15,11 +15,13 @@
 	<body>
         <script id="vertex-shader" type="x-shader/x-vertex">
 	        varying vec2 vUv;
+			varying vec3 vScreenNormal;
 			varying vec3 vNormal;
 
 	        void main() {
 		        vUv = uv;
-			    vNormal = normalMatrix * normal;
+                vNormal = normal;
+			    vScreenNormal = normalMatrix * normal;
 		        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 	        }
         </script>
