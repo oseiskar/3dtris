@@ -2,18 +2,12 @@ uniform float cameraNear;
 uniform float cameraFar;
 
 uniform vec2 size;
-uniform float aoClamp;
-uniform float lumInfluence;
-//uniform sampler2D tDiffuse;
 uniform sampler2D tDepth;
+uniform sampler2D tDiffuse;
 uniform vec2 projectionXY;
 
 varying vec2 vUv;
-varying vec3 vNormal;
 varying vec3 vScreenNormal;
-
-//#define DL 2.399963229728653
-//#define EULER 2.718281828459045
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -21,7 +15,7 @@ const int samples = 32;
 const float radius = 0.04;
 const float farClip = 0.2;
 
-const float intensity = 1.0;
+//const float intensity = 1.0;
 
 #include <packing>
 
@@ -46,8 +40,7 @@ float readDepth( const in vec2 coord ) {
 }
 
 void main() {
-    //vec3 color = texture2D( tDiffuse, vUv ).rgb;
-    vec3 color = vec3(1.0);
+    vec3 color = texture2D( tDiffuse, gl_FragCoord.xy / size ).rgb;
 
     vec2 noise1 = rand( gl_FragCoord.xy );
     vec2 noise2 = rand( gl_FragCoord.xy * 0.5 );
@@ -76,7 +69,6 @@ void main() {
         vec3 dp = (cos(l)*r*xVec + sin(l)*r*yVec + (abs(z) + 5. / float(samples)) * zVec)*curRadius;
         if (abs(dp.x * wh.x) > minD.x && abs(dp.y * wh.y) > minD.y)
         {
-
             float d1 = readDepth(xy0 + vec2(dp.x, dp.y) * wh);
             if (depth - dp.z > d1 + radius*0.1) {
                 ao += 1.0 * clamp(1. - abs(depth - d1) / farClip, 0., 1.);
@@ -85,7 +77,7 @@ void main() {
     }
 
     ao /= float( samples );
-    ao = 1.0 - ao * intensity;
+    ao = 1.0 - ao;
 
     /*vec3 color = texture2D( tDiffuse, vUv ).rgb;
 
@@ -94,10 +86,11 @@ void main() {
     vec3 luminance = vec3( lum );
     vec3 final = vec3( color * mix( vec3( ao ), vec3( 1.0 ), luminance * lumInfluence ) );*/
 
-    float diffIntensity = 0.3;
-    float diffuse = dot(vNormal, normalize(vec3(-1,5,3))) * diffIntensity + (1.-diffIntensity);
+    //float diffIntensity = 0.3;
+    //float diffuse = dot(vNormal, normalize(vec3(-1,5,3))) * diffIntensity + (1.-diffIntensity);
 
-    vec3 final = color * ao * diffuse;
+    //vec3 final = vec3(1.,1.,1.)*ao;
+    vec3 final = color*ao;
 
     gl_FragColor = vec4( final, 1.0 );
 }

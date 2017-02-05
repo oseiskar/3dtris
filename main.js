@@ -1,8 +1,9 @@
 var camera, scene, renderer, controls;
 
-var depthMaterial, depthRenderTarget;
-var theShader;
+var depthMaterial;
+var shaders;
 var meshes;
+var frameBuffers = {};
 
 (function(){
 
@@ -22,7 +23,6 @@ function planeGeometry(sz) {
 
     var x2 = sz;
     var y2 = sz;
-
 
     geometry.vertices.push(
         new THREE.Vector3(x1,y1,z),//vertex0
@@ -90,35 +90,31 @@ function generateMeshes() {
     return meshes;
 }
 
-function init(shaders) {
+function init(loadedShaders) {
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10 );
 	camera.position.z = 3;
 	scene = new THREE.Scene();
 
-    theShader = {
-	    uniforms: {
+    shaders = {
+        ssao: {
+    	    uniforms: {
+    		    "tDepth":       { value: null },
+        		"tDiffuse":     { value: null },
+    		    "size":         { value: new THREE.Vector2( 512, 512 ) },
+    		    "cameraNear":   { value: 1 },
+    		    "cameraFar":    { value: 100 },
+                "projectionXY": { value: new THREE.Vector2(1, 1) }
+    	    },
 
-		    "tDiffuse":     { value: null },
-		    "tDepth":       { value: null },
-		    "size":         { value: new THREE.Vector2( 512, 512 ) },
-		    "cameraNear":   { value: 1 },
-		    "cameraFar":    { value: 100 },
-            "projectionXY": { value: new THREE.Vector2(1, 1) },
-		    "aoClamp":      { value: 0.5 },
-		    "lumInfluence": { value: 0.5 }
+    	    vertexShader: $('#ssao-vertex-shader').text(),
+    	    fragmentShader: loadedShaders.ssao.fragment
+    	}
+    };
 
-	    },
-
-	    vertexShader: $('#vertex-shader').text(),
-	    fragmentShader: shaders.ssao.fragment
-	};
-
-    var shaderMaterial = new THREE.ShaderMaterial(theShader);
+    shaders.ssao.material = new THREE.ShaderMaterial(shaders.ssao);
 
     meshes = generateMeshes();
     meshes.forEach(function(mesh) {
-        mesh._shaderMaterial = shaderMaterial;
-        mesh._originalMaterial = mesh.material;
         scene.add(mesh);
     });
 
@@ -142,8 +138,6 @@ function init(shaders) {
 function animate() {
 	requestAnimationFrame( animate );
 	controls.update();
-	//mesh.rotation.x += 0.005;
-	//mesh.rotation.y += 0.01;
 	render();
 }
 
@@ -162,20 +156,19 @@ function onWindowResize() {
 	var pixelRatio = renderer.getPixelRatio();
 	var newWidth  = Math.floor( width / pixelRatio ) || 1;
 	var newHeight = Math.floor( height / pixelRatio ) || 1;
-	depthRenderTarget.setSize( newWidth, newHeight );
+
+    for (var key in frameBuffers) {
+        frameBuffers[key].setSize( newWidth, newHeight );
+    }
 
     updateUniforms();
-
-	//effectComposer.setSize( newWidth, newHeight );
 }
 
 function updateUniforms() {
-    theShader.uniforms.size.value.set( window.innerWidth, window.innerHeight );
-    theShader.uniforms.projectionXY.value.set(
+    shaders.ssao.uniforms.size.value.set( window.innerWidth, window.innerHeight );
+    shaders.ssao.uniforms.projectionXY.value.set(
         camera.projectionMatrix.elements[0],
         camera.projectionMatrix.elements[5]);
-
-    console.log(theShader.uniforms);
 }
 
 function initPostprocessing() {
@@ -189,42 +182,27 @@ function initPostprocessing() {
 	depthMaterial.blending = THREE.NoBlending;
 
 	var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-	depthRenderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+    //frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+    frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
 
-	//ssaoPass.uniforms[ "tDiffuse" ].value will be set by ShaderPass
-	theShader.uniforms.tDepth.value = depthRenderTarget.texture;
-	theShader.uniforms.cameraNear.value = camera.near;
-	theShader.uniforms.cameraFar.value = camera.far;
-	theShader.uniforms.aoClamp.value = 0.3;
-	theShader.uniforms.lumInfluence.value = 0.5;
+    shaders.ssao.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
+	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
+	shaders.ssao.uniforms.cameraNear.value = camera.near;
+	shaders.ssao.uniforms.cameraFar.value = camera.far;
 
     updateUniforms();
-
-	// Add pass to effect composer
-	//effectComposer = new THREE.EffectComposer( renderer );
-	//effectComposer.addPass( renderPass );
-	//effectComposer.addPass( ssaoPass );
 
 }
 
 function render() {
-
-	/*var timer = performance.now();
-	group.rotation.x = timer * 0.0002;
-	group.rotation.y = timer * 0.0001;*/
-
-    meshes.forEach(function(mesh) {mesh.material = mesh._originalMaterial;});
-	// Render depth into depthRenderTarget
+	// Render depth into frameBuffers.depth
 	scene.overrideMaterial = depthMaterial;
-	renderer.render( scene, camera, depthRenderTarget, true );
+	renderer.render( scene, camera, frameBuffers.depth, true );
 
-	// Render renderPass and SSAO shaderPass
 	scene.overrideMaterial = null;
+    renderer.render( scene, camera, frameBuffers.diffuse );
 
-    meshes.forEach(function(mesh) {mesh.material = mesh._shaderMaterial;});
-
-	renderer.render( scene, camera );
-
-
-	//effectComposer.render();
+    scene.overrideMaterial = shaders.ssao.material;
+	renderer.render(scene, camera);
 }
