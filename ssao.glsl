@@ -6,16 +6,22 @@ uniform sampler2D tDepth;
 uniform sampler2D tDiffuse;
 uniform vec2 projectionXY;
 
+uniform sampler2D tShadow;
+uniform float shadowFar;
+uniform vec3 shadowX, shadowY, shadowZ;
+uniform vec3 shadowOrigin;
+uniform vec2 shadowSize;
+
 varying vec2 vUv;
 varying vec3 vScreenNormal;
+varying vec3 vNormal;
+varying vec3 vPosition;
 
 #define M_PI 3.1415926535897932384626433832795
 
 const int samples = 32;
 const float radius = 0.04;
 const float farClip = 0.2;
-
-//const float intensity = 1.0;
 
 #include <packing>
 
@@ -37,6 +43,11 @@ float readDepth( const in vec2 coord ) {
 
     z = 2.0* z - 1.0;
     return 2.0 * cameraNear * cameraFar / ( cameraFarPlusNear - z * cameraFarMinusNear );
+}
+
+float readShadowDepth( const in vec2 coord ) {
+    float z = unpackRGBAToDepth( texture2D( tShadow, coord ) );
+    return z * shadowFar;
 }
 
 void main() {
@@ -76,8 +87,10 @@ void main() {
         }
     }
 
+    const float aoIntensity = 1.0;
+
     ao /= float( samples );
-    ao = 1.0 - ao;
+    ao = max(1.0 - ao * aoIntensity, 0.);
 
     /*vec3 color = texture2D( tDiffuse, vUv ).rgb;
 
@@ -86,11 +99,26 @@ void main() {
     vec3 luminance = vec3( lum );
     vec3 final = vec3( color * mix( vec3( ao ), vec3( 1.0 ), luminance * lumInfluence ) );*/
 
-    //float diffIntensity = 0.3;
-    //float diffuse = dot(vNormal, normalize(vec3(-1,5,3))) * diffIntensity + (1.-diffIntensity);
 
-    //vec3 final = vec3(1.,1.,1.)*ao;
-    vec3 final = color*ao;
+    vec3 shadowPos = vPosition - shadowOrigin;
+    vec2 shadowCoord = vec2(dot(shadowPos, shadowX), dot(shadowPos, shadowY)) / shadowSize + 0.5;
+    //shadowCoord = vec2(shadowCoord.x + 0.5, 1.0 - (shadowCoord.y + 0.5));
+    float shadowDepth = dot(shadowPos, -shadowZ);
+    float refDepth = readShadowDepth(shadowCoord);
+
+    float ambient = 0.4;
+    float diffuse = max(dot(vNormal, shadowZ), 0.);
+
+    float shadow = 0.;
+    if (shadowDepth > refDepth + 0.01)
+        shadow = 1.;
+
+    diffuse = diffuse * (1. - shadow) * (1. - ambient) + ambient;
+
+    //shadow = refDepth;
+    //shadow = shadowDepth ;//+ 3.0;
+
+    vec3 final = color*ao*diffuse;
 
     gl_FragColor = vec4( final, 1.0 );
 }

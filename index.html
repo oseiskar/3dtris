@@ -14,16 +14,20 @@
 	</head>
 	<body>
         <script id="ssao-vertex-shader" type="x-shader/x-vertex">
-	        varying vec2 vUv;
-			varying vec3 vScreenNormal;
-			//varying vec3 vNormal;
+            varying vec2 vUv;
+            varying vec3 vScreenNormal;
+            varying vec3 vNormal;
+            varying vec3 vPosition;
 
-	        void main() {
-		        vUv = uv;
-                //vNormal = normal;
-			    vScreenNormal = normalMatrix * normal;
-		        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-	        }
+            uniform mat4 cameraMatrix;
+
+            void main() {
+                vPosition = (cameraMatrix * modelViewMatrix * vec4( position, 1.0 )).xyz;
+                vUv = uv;
+                vNormal = normal;
+                vScreenNormal = normalMatrix * normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            }
         </script>
         <script data-src="ssao.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
         <script data-src="ssao.glsl" data-name="ssao" type="x-shader/x-fragment"></script>

@@ -4,6 +4,7 @@ var depthMaterial;
 var shaders;
 var meshes;
 var frameBuffers = {};
+var shadow;
 
 (function(){
 
@@ -85,25 +86,82 @@ function generateMeshes() {
         new THREE.MeshBasicMaterial({ color: 0x808080 })
     );
     plane.rotateX( - Math.PI / 2);
+    plane.doubleSided = true;
     meshes.push(plane);
 
     return meshes;
 }
 
+function deg2rad(deg) { return Math.PI * deg / 180.0; }
+
+function initShadow() {
+
+    var shadowPitch = deg2rad(40);
+    var shadowYaw = deg2rad(30);
+
+    var shadowZ = new THREE.Vector3(
+        Math.cos(shadowYaw)*Math.cos(shadowPitch),
+        Math.sin(shadowPitch),
+        Math.sin(shadowYaw)*Math.cos(shadowPitch)).negate();
+
+    var shadowX = new THREE.Vector3().crossVectors(shadowZ, new THREE.Vector3(0,1,0)).normalize();
+    var shadowY = new THREE.Vector3().crossVectors(shadowX, shadowZ);
+
+    var width = 5;
+    var height = 5;
+    var far = 10.0;
+
+    var pos = shadowZ.clone().multiplyScalar(-2.0);
+
+    var camera = new THREE.OrthographicCamera(
+        width / - 2, width / 2, height / 2, height / - 2, 0.0, far );
+
+    camera.matrixAutoUpdate = false;
+    camera.matrix
+        .makeBasis(shadowX, shadowY, shadowZ.negate())
+        .setPosition(pos);
+    camera.updateMatrixWorld( true );
+
+    console.log(camera);
+
+    return {
+        size: new THREE.Vector2(width, height),
+        far: far,
+        pos: pos,
+        xVec: shadowX,
+        yVec: shadowY,
+        zVec: shadowZ,
+        camera: camera
+    };
+}
+
 function init(loadedShaders) {
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10 );
+
+    shadow = initShadow();
+
 	camera.position.z = 3;
 	scene = new THREE.Scene();
 
     shaders = {
         ssao: {
     	    uniforms: {
+                "cameraMatrix": { value: new THREE.Matrix4() },
+
     		    "tDepth":       { value: null },
         		"tDiffuse":     { value: null },
     		    "size":         { value: new THREE.Vector2( 512, 512 ) },
     		    "cameraNear":   { value: 1 },
     		    "cameraFar":    { value: 100 },
-                "projectionXY": { value: new THREE.Vector2(1, 1) }
+                "projectionXY": { value: new THREE.Vector2(1, 1) },
+
+                "tShadow":      { value: null },
+                "shadowFar":    { value: shadow.far },
+                "shadowX":      { value: shadow.xVec },
+                "shadowY":      { value: shadow.yVec },
+                "shadowZ":      { value: shadow.zVec },
+                "shadowOrigin": { value: shadow.pos },
+                "shadowSize":   { value: shadow.size }
     	    },
 
     	    vertexShader: $('#ssao-vertex-shader').text(),
@@ -173,9 +231,6 @@ function updateUniforms() {
 
 function initPostprocessing() {
 
-	// Setup render pass
-	var renderPass = new THREE.RenderPass( scene, camera );
-
 	// Setup depth pass
 	depthMaterial = new THREE.MeshDepthMaterial();
 	depthMaterial.depthPacking = THREE.RGBADepthPacking;
@@ -185,20 +240,29 @@ function initPostprocessing() {
 	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     //frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+    frameBuffers.shadow = new THREE.WebGLRenderTarget( 3000, 3000, pars );
 
     shaders.ssao.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
 	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
 	shaders.ssao.uniforms.cameraNear.value = camera.near;
 	shaders.ssao.uniforms.cameraFar.value = camera.far;
 
+    shaders.ssao.uniforms.tShadow.value = frameBuffers.shadow.texture;
+
     updateUniforms();
 
 }
 
 function render() {
+
+    shaders.ssao.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
+
+    //var camera = shadow.camera;
 	// Render depth into frameBuffers.depth
 	scene.overrideMaterial = depthMaterial;
 	renderer.render( scene, camera, frameBuffers.depth, true );
+
+    renderer.render( scene, shadow.camera, frameBuffers.shadow, true );
 
 	scene.overrideMaterial = null;
     renderer.render( scene, camera, frameBuffers.diffuse );
