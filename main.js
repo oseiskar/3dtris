@@ -146,30 +146,41 @@ function init(loadedShaders) {
     shaders = {
         ssao: {
     	    uniforms: {
-                "cameraMatrix": { value: new THREE.Matrix4() },
 
     		    "tDepth":       { value: null },
-        		"tDiffuse":     { value: null },
     		    "size":         { value: new THREE.Vector2( 512, 512 ) },
     		    "cameraNear":   { value: 1 },
     		    "cameraFar":    { value: 100 },
                 "projectionXY": { value: new THREE.Vector2(1, 1) },
+    	    },
 
+    	    vertexShader: $('#ssao-vertex-shader').text(),
+    	    fragmentShader: loadedShaders.ssao.fragment
+    	},
+
+        compose: {
+    	    uniforms: {
+                "size":         { value: new THREE.Vector2( 512, 512 ) },
+
+                "cameraMatrix": { value: new THREE.Matrix4() },
+                "tDiffuse":     { value: null },
                 "tShadow":      { value: null },
+                "tAO":          { value: null },
                 "shadowFar":    { value: shadow.far },
                 "shadowX":      { value: shadow.xVec },
                 "shadowY":      { value: shadow.yVec },
                 "shadowZ":      { value: shadow.zVec },
                 "shadowOrigin": { value: shadow.pos },
                 "shadowSize":   { value: shadow.size }
-    	    },
+            },
 
-    	    vertexShader: $('#ssao-vertex-shader').text(),
-    	    fragmentShader: loadedShaders.ssao.fragment
-    	}
+            vertexShader: $('#compose-vertex-shader').text(),
+            fragmentShader: loadedShaders.compose.fragment
+        }
     };
 
     shaders.ssao.material = new THREE.ShaderMaterial(shaders.ssao);
+    shaders.compose.material = new THREE.ShaderMaterial(shaders.compose);
 
     meshes = generateMeshes();
     meshes.forEach(function(mesh) {
@@ -224,6 +235,8 @@ function onWindowResize() {
 
 function updateUniforms() {
     shaders.ssao.uniforms.size.value.set( window.innerWidth, window.innerHeight );
+    shaders.compose.uniforms.size.value.set( window.innerWidth, window.innerHeight );
+
     shaders.ssao.uniforms.projectionXY.value.set(
         camera.projectionMatrix.elements[0],
         camera.projectionMatrix.elements[5]);
@@ -238,16 +251,17 @@ function initPostprocessing() {
 
 	const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
 	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    //frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+    frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.shadow = new THREE.WebGLRenderTarget( 3000, 3000, pars );
 
-    shaders.ssao.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
-	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
 	shaders.ssao.uniforms.cameraNear.value = camera.near;
 	shaders.ssao.uniforms.cameraFar.value = camera.far;
+	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
 
-    shaders.ssao.uniforms.tShadow.value = frameBuffers.shadow.texture;
+    shaders.compose.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
+    shaders.compose.uniforms.tAO.value = frameBuffers.ao.texture;
+    shaders.compose.uniforms.tShadow.value = frameBuffers.shadow.texture;
 
     updateUniforms();
 
@@ -255,7 +269,7 @@ function initPostprocessing() {
 
 function render() {
 
-    shaders.ssao.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
+    shaders.compose.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
 
     //var camera = shadow.camera;
 	// Render depth into frameBuffers.depth
@@ -264,9 +278,12 @@ function render() {
 
     renderer.render( scene, shadow.camera, frameBuffers.shadow, true );
 
+    scene.overrideMaterial = shaders.ssao.material;
+	renderer.render(scene, camera, frameBuffers.ao );
+
 	scene.overrideMaterial = null;
     renderer.render( scene, camera, frameBuffers.diffuse );
 
-    scene.overrideMaterial = shaders.ssao.material;
+    scene.overrideMaterial = shaders.compose.material;
 	renderer.render(scene, camera);
 }

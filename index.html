@@ -14,8 +14,14 @@
 	</head>
 	<body>
         <script id="ssao-vertex-shader" type="x-shader/x-vertex">
-            varying vec2 vUv;
             varying vec3 vScreenNormal;
+
+            void main() {
+                vScreenNormal = normalMatrix * normal;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            }
+        </script>
+        <script id="compose-vertex-shader" type="x-shader/x-vertex">
             varying vec3 vNormal;
             varying vec3 vPosition;
 
@@ -23,13 +29,12 @@
 
             void main() {
                 vPosition = (cameraMatrix * modelViewMatrix * vec4( position, 1.0 )).xyz;
-                vUv = uv;
                 vNormal = normal;
-                vScreenNormal = normalMatrix * normal;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
             }
         </script>
         <script data-src="ssao.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
+        <script data-src="compose.glsl" data-name="compose" type="x-shader/x-fragment"></script>
 
         <script src="js-libs/jquery-2.1.4.min.js"></script>
 		<script src="js-libs/three.min.js"></script>
