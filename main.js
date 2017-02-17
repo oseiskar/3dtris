@@ -18,12 +18,12 @@ var shadow;
 function planeGeometry(sz) {
     var geometry = new THREE.Geometry();
 
-    var x1 = -sz;
-    var y1 = -sz;
-    var z = 0;
+    const x1 = -sz;
+    const y1 = -sz;
+    const z = 0;
 
-    var x2 = sz;
-    var y2 = sz;
+    const x2 = sz;
+    const y2 = sz;
 
     geometry.vertices.push(
         new THREE.Vector3(x1,y1,z),//vertex0
@@ -42,17 +42,17 @@ function planeGeometry(sz) {
 }
 
 function generateMeshes() {
-    var w = 7;
-    var h = 6;
-    var d = 8;
+    const w = 7;
+    const h = 6;
+    const d = 8;
 
-    var boxSz = 1.0 / Math.max(w, h);
+    const boxSz = 1.0 / Math.max(w, h);
 
     function randomByte() {
         return Math.floor(Math.random()*0xff);
     }
 
-    var meshes = [];
+    const meshes = [];
     for (var z=0; z<d; ++z) {
         for (var x=0; x<w; ++x) {
             for (var y=0; y<h; ++y) {
@@ -81,7 +81,7 @@ function generateMeshes() {
     }
 
     // add plane
-    var plane = new THREE.Mesh(
+    const plane = new THREE.Mesh(
         planeGeometry(2),
         new THREE.MeshBasicMaterial({ color: 0x808080 })
     );
@@ -96,24 +96,24 @@ function deg2rad(deg) { return Math.PI * deg / 180.0; }
 
 function initShadow() {
 
-    var shadowPitch = deg2rad(40);
-    var shadowYaw = deg2rad(30);
+    const shadowPitch = deg2rad(40);
+    const shadowYaw = deg2rad(30);
 
-    var shadowZ = new THREE.Vector3(
+    const shadowZ = new THREE.Vector3(
         Math.cos(shadowYaw)*Math.cos(shadowPitch),
         Math.sin(shadowPitch),
         Math.sin(shadowYaw)*Math.cos(shadowPitch)).negate();
 
-    var shadowX = new THREE.Vector3().crossVectors(shadowZ, new THREE.Vector3(0,1,0)).normalize();
-    var shadowY = new THREE.Vector3().crossVectors(shadowX, shadowZ);
+    const shadowX = new THREE.Vector3().crossVectors(shadowZ, new THREE.Vector3(0,1,0)).normalize();
+    const shadowY = new THREE.Vector3().crossVectors(shadowX, shadowZ);
 
-    var width = 5;
-    var height = 5;
-    var far = 10.0;
+    const width = 5;
+    const height = 5;
+    const far = 10.0;
 
-    var pos = shadowZ.clone().multiplyScalar(-2.0);
+    const pos = shadowZ.clone().multiplyScalar(-2.0);
 
-    var camera = new THREE.OrthographicCamera(
+    const camera = new THREE.OrthographicCamera(
         width / - 2, width / 2, height / 2, height / - 2, 0.0, far );
 
     camera.matrixAutoUpdate = false;
@@ -201,8 +201,8 @@ function animate() {
 
 function onWindowResize() {
 
-	var width = window.innerWidth;
-	var height = window.innerHeight;
+	const width = window.innerWidth;
+	const height = window.innerHeight;
 
 	camera.aspect = width / height;
 	camera.updateProjectionMatrix();
@@ -211,9 +211,9 @@ function onWindowResize() {
 	// Resize renderTargets
 	//ssaoPass.uniforms[ 'size' ].value.set( width, height );
 
-	var pixelRatio = renderer.getPixelRatio();
-	var newWidth  = Math.floor( width / pixelRatio ) || 1;
-	var newHeight = Math.floor( height / pixelRatio ) || 1;
+	const pixelRatio = renderer.getPixelRatio();
+	const newWidth  = Math.floor( width / pixelRatio ) || 1;
+	const newHeight = Math.floor( height / pixelRatio ) || 1;
 
     for (var key in frameBuffers) {
         frameBuffers[key].setSize( newWidth, newHeight );
@@ -236,7 +236,7 @@ function initPostprocessing() {
 	depthMaterial.depthPacking = THREE.RGBADepthPacking;
 	depthMaterial.blending = THREE.NoBlending;
 
-	var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+	const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
 	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     //frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
