@@ -1,4 +1,7 @@
-var camera, scene, renderer, controls;
+"use strict";
+/*globals SHADER_LOADER, THREE, console, window, document, $, requestAnimationFrame */
+
+var camera, scene, renderer, controls, flatScene, flatCamera;
 
 var depthMaterial;
 var shaders;
@@ -146,7 +149,6 @@ function init(loadedShaders) {
     shaders = {
         ssao: {
     	    uniforms: {
-
     		    "tDepth":       { value: null },
     		    "size":         { value: new THREE.Vector2( 512, 512 ) },
     		    "cameraNear":   { value: 1 },
@@ -176,11 +178,48 @@ function init(loadedShaders) {
 
             vertexShader: $('#compose-vertex-shader').text(),
             fragmentShader: loadedShaders.compose.fragment
+        },
+
+        blurX: {
+            defines: {
+                "WHICHCOORD": "coord.x",
+                "DIMENSION": "size.x"
+            },
+            uniforms: {
+                "tSource":  { value: null },
+                "size":     { value: new THREE.Vector2( 512, 512 ) }
+            },
+            vertexShader: $('#flat-vertex-shader').text(),
+            fragmentShader: loadedShaders.blur.fragment
+        },
+
+        blurY: {
+            defines: {
+                "WHICHCOORD": "coord.y",
+                "DIMENSION": "size.y"
+            },
+            uniforms: {
+                "tSource":  { value: null },
+                "size":     { value: new THREE.Vector2( 512, 512 ) }
+            },
+            vertexShader: $('#flat-vertex-shader').text(),
+            fragmentShader: loadedShaders.blur.fragment
         }
     };
 
-    shaders.ssao.material = new THREE.ShaderMaterial(shaders.ssao);
-    shaders.compose.material = new THREE.ShaderMaterial(shaders.compose);
+    for (var v in shaders) {
+        shaders[v].material = new THREE.ShaderMaterial(shaders[v]);
+    }
+
+    flatCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+
+    // must have some material even if always overridden
+    const flatQuad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ),
+        shaders.blurX.material );
+
+    flatQuad.frustumCulled = false; // Avoid getting clipped
+    flatScene = new THREE.Scene();
+    flatScene.add( flatQuad );
 
     meshes = generateMeshes();
     meshes.forEach(function(mesh) {
@@ -227,15 +266,19 @@ function onWindowResize() {
 	const newHeight = Math.floor( height / pixelRatio ) || 1;
 
     for (var key in frameBuffers) {
-        frameBuffers[key].setSize( newWidth, newHeight );
+        if (!frameBuffers[key].constantSize) {
+            frameBuffers[key].setSize( newWidth, newHeight );
+        }
     }
 
     updateUniforms();
 }
 
 function updateUniforms() {
-    shaders.ssao.uniforms.size.value.set( window.innerWidth, window.innerHeight );
-    shaders.compose.uniforms.size.value.set( window.innerWidth, window.innerHeight );
+
+    for (var v in shaders) {
+        shaders[v].uniforms.size.value.set( window.innerWidth, window.innerHeight );
+    }
 
     shaders.ssao.uniforms.projectionXY.value.set(
         camera.projectionMatrix.elements[0],
@@ -253,11 +296,16 @@ function initPostprocessing() {
 	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+    frameBuffers.tmp = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
     frameBuffers.shadow = new THREE.WebGLRenderTarget( 3000, 3000, pars );
+    frameBuffers.shadow.constantSize = true;
 
 	shaders.ssao.uniforms.cameraNear.value = camera.near;
 	shaders.ssao.uniforms.cameraFar.value = camera.far;
 	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
+
+    shaders.blurX.uniforms.tSource.value = frameBuffers.ao.texture;
+    shaders.blurY.uniforms.tSource.value = frameBuffers.tmp.texture;
 
     shaders.compose.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
     shaders.compose.uniforms.tAO.value = frameBuffers.ao.texture;
@@ -279,7 +327,14 @@ function render() {
     renderer.render( scene, shadow.camera, frameBuffers.shadow, true );
 
     scene.overrideMaterial = shaders.ssao.material;
+    renderer.setClearColor(0xffffff, 1);
 	renderer.render(scene, camera, frameBuffers.ao );
+    renderer.setClearColor(0x000000, 0);
+
+    flatScene.overrideMaterial = shaders.blurX.material;
+    renderer.render(flatScene, flatCamera, frameBuffers.tmp );
+    flatScene.overrideMaterial = shaders.blurY.material;
+    renderer.render(flatScene, flatCamera, frameBuffers.ao );
 
 	scene.overrideMaterial = null;
     renderer.render( scene, camera, frameBuffers.diffuse );
