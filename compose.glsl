@@ -36,6 +36,8 @@ void main() {
     float ambient = 0.4;
     float diffuse = max(dot(vNormal, shadowZ), 0.);
 
+    const float brightness = 1.;
+
     float shadow = 0.;
     if (shadowDepth > refDepth + 0.01)
         shadow = 1.;
@@ -45,7 +47,7 @@ void main() {
     //shadow = refDepth;
     //shadow = shadowDepth ;//+ 3.0;
 
-    vec3 final = color*ao*diffuse;
+    vec3 final = color*ao*diffuse*brightness;
 
     gl_FragColor = vec4( final, 1.0 );
 }

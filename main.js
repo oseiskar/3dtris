@@ -9,6 +9,8 @@ var meshes;
 var frameBuffers = {};
 var shadow;
 
+const SUPERSAMPLING = 2;
+
 (function(){
 
     SHADER_LOADER.load(function(shaders) {
@@ -99,7 +101,7 @@ function deg2rad(deg) { return Math.PI * deg / 180.0; }
 
 function initShadow() {
 
-    const shadowPitch = deg2rad(40);
+    const shadowPitch = deg2rad(50);
     const shadowYaw = deg2rad(30);
 
     const shadowZ = new THREE.Vector3(
@@ -204,6 +206,18 @@ function init(loadedShaders) {
             },
             vertexShader: $('#flat-vertex-shader').text(),
             fragmentShader: loadedShaders.blur.fragment
+        },
+
+        downsample: {
+            defines: {
+                "DIM": ""+SUPERSAMPLING,
+            },
+            uniforms: {
+                "tSource":  { value: null },
+                "size":     { value: new THREE.Vector2( 512, 512 ) }
+            },
+            vertexShader: $('#flat-vertex-shader').text(),
+            fragmentShader: loadedShaders.downsample2d.fragment
         }
     };
 
@@ -258,26 +272,41 @@ function onWindowResize() {
 	camera.updateProjectionMatrix();
 	renderer.setSize( width, height );
 
-	// Resize renderTargets
-	//ssaoPass.uniforms[ 'size' ].value.set( width, height );
-
-	const pixelRatio = renderer.getPixelRatio();
-	const newWidth  = Math.floor( width / pixelRatio ) || 1;
-	const newHeight = Math.floor( height / pixelRatio ) || 1;
-
-    for (var key in frameBuffers) {
-        if (!frameBuffers[key].constantSize) {
-            frameBuffers[key].setSize( newWidth, newHeight );
-        }
-    }
+    setBufferSizes();
 
     updateUniforms();
 }
 
+function setBufferSizes() {
+
+	const width = window.innerWidth;
+	const height = window.innerHeight;
+
+    const pixelRatio = renderer.getPixelRatio();
+    const newWidth  = Math.floor( width / pixelRatio ) || 1;
+    const newHeight = Math.floor( height / pixelRatio ) || 1;
+
+    for (var key in frameBuffers) {
+        if (!frameBuffers[key].constantSize) {
+            let szMul = 1;
+            if (frameBuffers[key].supersampling) {
+                szMul = frameBuffers[key].supersampling;
+            }
+            frameBuffers[key].setSize( newWidth*szMul, newHeight*szMul );
+        }
+    }
+}
+
 function updateUniforms() {
+	const width = window.innerWidth;
+	const height = window.innerHeight;
 
     for (var v in shaders) {
-        shaders[v].uniforms.size.value.set( window.innerWidth, window.innerHeight );
+        let szMul = 1;
+        if (shaders[v].supersampling) {
+            szMul = shaders[v].supersampling;
+        }
+        shaders[v].uniforms.size.value.set( width*szMul, height*szMul );
     }
 
     shaders.ssao.uniforms.projectionXY.value.set(
@@ -293,12 +322,18 @@ function initPostprocessing() {
 	depthMaterial.blending = THREE.NoBlending;
 
 	const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-	frameBuffers.depth = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    frameBuffers.ao = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    frameBuffers.diffuse = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    frameBuffers.tmp = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
+	frameBuffers.depth = new THREE.WebGLRenderTarget(  1, 1, pars );
+    frameBuffers.ao = new THREE.WebGLRenderTarget( 1, 1, pars );
+    frameBuffers.diffuse = new THREE.WebGLRenderTarget( 1, 1, pars );
+    frameBuffers.diffuse.supersampling = SUPERSAMPLING;
+    frameBuffers.tmp = new THREE.WebGLRenderTarget( 1, 1, pars );
+    frameBuffers.final = new THREE.WebGLRenderTarget( 1, 1, pars );
+    frameBuffers.final.supersampling = SUPERSAMPLING;
+    shaders.compose.supersampling = SUPERSAMPLING;
     frameBuffers.shadow = new THREE.WebGLRenderTarget( 3000, 3000, pars );
     frameBuffers.shadow.constantSize = true;
+
+    setBufferSizes();
 
 	shaders.ssao.uniforms.cameraNear.value = camera.near;
 	shaders.ssao.uniforms.cameraFar.value = camera.far;
@@ -310,6 +345,8 @@ function initPostprocessing() {
     shaders.compose.uniforms.tDiffuse.value = frameBuffers.diffuse.texture;
     shaders.compose.uniforms.tAO.value = frameBuffers.ao.texture;
     shaders.compose.uniforms.tShadow.value = frameBuffers.shadow.texture;
+
+    shaders.downsample.uniforms.tSource.value = frameBuffers.final.texture;
 
     updateUniforms();
 
@@ -340,5 +377,8 @@ function render() {
     renderer.render( scene, camera, frameBuffers.diffuse );
 
     scene.overrideMaterial = shaders.compose.material;
-	renderer.render(scene, camera);
+	renderer.render(scene, camera, frameBuffers.final);
+
+    flatScene.overrideMaterial = shaders.downsample.material;
+    renderer.render(flatScene, flatCamera );
 }
