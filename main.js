@@ -349,7 +349,6 @@ function initPostprocessing() {
     shaders.downsample.uniforms.tSource.value = frameBuffers.final.texture;
 
     updateUniforms();
-
 }
 
 function render() {
@@ -377,8 +376,14 @@ function render() {
     renderer.render( scene, camera, frameBuffers.diffuse );
 
     scene.overrideMaterial = shaders.compose.material;
-	renderer.render(scene, camera, frameBuffers.final);
 
-    flatScene.overrideMaterial = shaders.downsample.material;
-    renderer.render(flatScene, flatCamera );
+    if (SUPERSAMPLING > 1) {
+        renderer.render(scene, camera, frameBuffers.final);
+
+        flatScene.overrideMaterial = shaders.downsample.material;
+        renderer.render(flatScene, flatCamera );
+    } else {
+	    renderer.render(scene, camera);
+    }
+
 }
