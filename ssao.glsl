@@ -11,7 +11,6 @@ varying vec3 vNormal;
 
 #define M_PI 3.1415926535897932384626433832795
 
-const int samples = 32;
 const float radius = 0.04;
 const float farClip = 0.2;
 
@@ -48,7 +47,7 @@ void main() {
     vec2 wh = projectionXY / depth;
 
     float ao = 0.0;
-    float dl = sqrt(M_PI * float(samples));
+    float dl = sqrt(M_PI * float(SAMPLES));
 
     vec3 zVec = vScreenNormal;
     vec3 xVec = normalize(cross(zVec, vec3(noise1.x, noise1.y, 0)));
@@ -56,14 +55,14 @@ void main() {
 
     vec2 minD = 0.5 / size;
 
-    for ( int i = 0; i <= samples; i ++ ) {
+    for ( int i = 0; i <= SAMPLES; i ++ ) {
 
-        float z = 1. - (2.*float(i+1) - 1.) / float(samples);
+        float z = 1. - (2.*float(i+1) - 1.) / float(SAMPLES);
         float l = sign(z) * dl*acos(z) + noise2.y * M_PI * 2.;
         float r = sqrt( 1.0 - z*z ) * (sin(float(i)*100.) + 1.0)*0.5;
 
         float curRadius = (1.0+sin(float(i*100)))*0.5*radius;
-        vec3 dp = (cos(l)*r*xVec + sin(l)*r*yVec + (abs(z) + 5. / float(samples)) * zVec)*curRadius;
+        vec3 dp = (cos(l)*r*xVec + sin(l)*r*yVec + (abs(z) + 5. / float(SAMPLES)) * zVec)*curRadius;
         if (abs(dp.x * wh.x) > minD.x && abs(dp.y * wh.y) > minD.y)
         {
             float d1 = readDepth(xy0 + vec2(dp.x, dp.y) * wh);
@@ -75,7 +74,7 @@ void main() {
 
     const float aoIntensity = 1.0;
 
-    ao /= float( samples );
+    ao /= float( SAMPLES );
     ao = max(1.0 - ao * aoIntensity, 0.);
 
     gl_FragColor = vec4( ao, ao, ao, 1.0 );

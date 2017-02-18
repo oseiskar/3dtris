@@ -9,7 +9,8 @@ var meshes;
 var frameBuffers = {};
 var shadow;
 
-const SUPERSAMPLING = 2;
+const SUPERSAMPLING = 1;
+const SSAO_SAMPLES = Math.max(2, 8 / SUPERSAMPLING);
 
 (function(){
 
@@ -148,8 +149,14 @@ function init(loadedShaders) {
 	camera.position.z = 3;
 	scene = new THREE.Scene();
 
+    const SSAO_BLUR_SAMPLES = 5;
+    const SSAO_BLUR_SIGMA = 3.0;
+
     shaders = {
         ssao: {
+            defines: {
+                "SAMPLES": SSAO_SAMPLES
+            },
     	    uniforms: {
     		    "tDepth":       { value: null },
     		    "size":         { value: new THREE.Vector2( 512, 512 ) },
@@ -185,7 +192,9 @@ function init(loadedShaders) {
         blurX: {
             defines: {
                 "WHICHCOORD": "coord.x",
-                "DIMENSION": "size.x"
+                "DIMENSION": "size.x",
+                "SAMPLES": SSAO_BLUR_SAMPLES,
+                "SIGMA": SSAO_BLUR_SIGMA
             },
             uniforms: {
                 "tSource":  { value: null },
@@ -198,7 +207,9 @@ function init(loadedShaders) {
         blurY: {
             defines: {
                 "WHICHCOORD": "coord.y",
-                "DIMENSION": "size.y"
+                "DIMENSION": "size.y",
+                "SAMPLES": SSAO_BLUR_SAMPLES,
+                "SIGMA": SSAO_BLUR_SIGMA
             },
             uniforms: {
                 "tSource":  { value: null },
@@ -210,7 +221,7 @@ function init(loadedShaders) {
 
         downsample: {
             defines: {
-                "DIM": ""+SUPERSAMPLING,
+                "DIM": SUPERSAMPLING,
             },
             uniforms: {
                 "tSource":  { value: null },
@@ -324,6 +335,8 @@ function initPostprocessing() {
 	const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
 	frameBuffers.depth = new THREE.WebGLRenderTarget(  1, 1, pars );
     frameBuffers.ao = new THREE.WebGLRenderTarget( 1, 1, pars );
+    shaders.ssao.supersampling = SUPERSAMPLING;
+    frameBuffers.ao.supersampling = SUPERSAMPLING;
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( 1, 1, pars );
     frameBuffers.diffuse.supersampling = SUPERSAMPLING;
     frameBuffers.tmp = new THREE.WebGLRenderTarget( 1, 1, pars );
