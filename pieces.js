@@ -35,12 +35,16 @@ Block.prototype.translated = function(dx, dy, dz) {
     return new Block(this.x + dx, this.y + dy, this.z + dz);
 };
 
-function Piece(blocks_) {
+function Piece(blocks_, center_) {
     var center = {
         x: 0,
         y: 0,
         z: 0
     };
+
+    if (center_) {
+        ['x', 'y', 'z'].forEach(k => center[k] = center_[k]);
+    }
 
     var blocks = blocks_.map(b => new Block(0,0,0).assign(b));
 
@@ -63,6 +67,10 @@ function Piece(blocks_) {
 
     this.getBlocks = function() {
         return blocks.map(b => b.translated(center.x, center.y, center.z));
+    };
+
+    this.copy = function() {
+        return new Piece(blocks, center);
     };
 }
 

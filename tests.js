@@ -38,7 +38,6 @@ QUnit.test( "test piece rotation and translation", function( assert ) {
     assert.equal(blocks[2].z, 1);
 });
 
-
 QUnit.test( "test translateBeyond", function( assert ) {
 
     let piece = new Piece([
@@ -66,4 +65,27 @@ QUnit.test( "test translateBeyond", function( assert ) {
     blocks = piece.getBlocks();
     assert.equal(blocks[0].x, 0);
     assert.equal(blocks[1].x, 1);
+});
+
+QUnit.test( "test piece copy", function( assert ) {
+
+    let piece = new Piece([
+        new Block(0,1,0),
+        new Block(1,0,0)
+    ]);
+
+    let copy = piece.copy();
+
+    piece.translate(0,2,0);
+    piece.rotate('y', -1);
+    let blocks = piece.getBlocks();
+
+    assert.equal(blocks[0].y, 3);
+    assert.equal(blocks[1].x, 0);
+    assert.equal(blocks[1].z, 1);
+
+    blocks = copy.getBlocks();
+    assert.equal(blocks[0].y, 1);
+    assert.equal(blocks[1].x, 1);
+    assert.equal(blocks[1].z, 0);
 });
