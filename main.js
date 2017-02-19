@@ -53,6 +53,7 @@ function generateMeshes() {
     const d = 8;
 
     const boxSz = 1.0 / Math.max(w, h);
+    const box = new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz );
 
     function randomByte() {
         return Math.floor(Math.random()*0xff);
@@ -72,8 +73,6 @@ function generateMeshes() {
                         randomByte() << 8 |
                         randomByte()
                 });
-
-                var box = new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz );
             	var mesh = new THREE.Mesh( box, material );
 
                 mesh.translateX((x - w*0.5)*boxSz);
