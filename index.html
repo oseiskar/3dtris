@@ -41,20 +41,15 @@
                 gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
             }
         </script>
-        <script data-src="ssao.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
-        <script data-src="compose.glsl" data-name="compose" type="x-shader/x-fragment"></script>
-        <script data-src="blur.glsl" data-name="blur" type="x-shader/x-fragment"></script>
-        <script data-src="downsample2d.glsl" data-name="downsample2d" type="x-shader/x-fragment"></script>
+        <script data-src="shaders/ssao.glsl" data-name="ssao" type="x-shader/x-fragment"></script>
+        <script data-src="shaders/compose.glsl" data-name="compose" type="x-shader/x-fragment"></script>
+        <script data-src="shaders/blur.glsl" data-name="blur" type="x-shader/x-fragment"></script>
+        <script data-src="shaders/downsample2d.glsl" data-name="downsample2d" type="x-shader/x-fragment"></script>
 
         <script src="js-libs/jquery-2.1.4.min.js"></script>
 		<script src="js-libs/three.min.js"></script>
         <script src="js-libs/OrbitControls.js"></script>
         <script src="js-libs/ShaderLoader.min.js"></script>
-		<script src="js-libs/shaders/CopyShader.js"></script>
-		<script src="js-libs/postprocessing/EffectComposer.js"></script>
-		<script src="js-libs/postprocessing/RenderPass.js"></script>
-		<script src="js-libs/postprocessing/ShaderPass.js"></script>
-		<script src="js-libs/postprocessing/MaskPass.js"></script>
 		<script src="main.js"></script>
 		<script src="pieces.js"></script>
 
