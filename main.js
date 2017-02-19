@@ -67,13 +67,13 @@ function generateMeshes() {
                 var prob = 1.0 / (z+1);
                 if (Math.random() > prob) continue;
 
-        	    var material = new THREE.MeshBasicMaterial({
+                var material = new THREE.MeshBasicMaterial({
                     color:
                         randomByte() << 16 |
                         randomByte() << 8 |
                         randomByte()
                 });
-            	var mesh = new THREE.Mesh( box, material );
+                var mesh = new THREE.Mesh( box, material );
 
                 mesh.translateX((x - w*0.5)*boxSz);
 
@@ -141,12 +141,12 @@ function initShadow() {
 }
 
 function init(loadedShaders) {
-	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10 );
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10 );
 
     shadow = initShadow();
 
-	camera.position.z = 3;
-	scene = new THREE.Scene();
+    camera.position.z = 3;
+    scene = new THREE.Scene();
 
     const SSAO_BLUR_SAMPLES = 5;
     const SSAO_BLUR_SIGMA = 3.0;
@@ -156,20 +156,20 @@ function init(loadedShaders) {
             defines: {
                 "SAMPLES": SSAO_SAMPLES
             },
-    	    uniforms: {
-    		    "tDepth":       { value: null },
-    		    "size":         { value: new THREE.Vector2( 512, 512 ) },
-    		    "cameraNear":   { value: 1 },
-    		    "cameraFar":    { value: 100 },
+            uniforms: {
+                "tDepth":       { value: null },
+                "size":         { value: new THREE.Vector2( 512, 512 ) },
+                "cameraNear":   { value: 1 },
+                "cameraFar":    { value: 100 },
                 "projectionXY": { value: new THREE.Vector2(1, 1) },
-    	    },
+            },
 
-    	    vertexShader: $('#ssao-vertex-shader').text(),
-    	    fragmentShader: loadedShaders.ssao.fragment
-    	},
+            vertexShader: $('#ssao-vertex-shader').text(),
+            fragmentShader: loadedShaders.ssao.fragment
+        },
 
         compose: {
-    	    uniforms: {
+            uniforms: {
                 "size":         { value: new THREE.Vector2( 512, 512 ) },
 
                 "cameraMatrix": { value: new THREE.Matrix4() },
@@ -250,37 +250,37 @@ function init(loadedShaders) {
         scene.add(mesh);
     });
 
-	renderer = new THREE.WebGLRenderer();
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	document.body.appendChild( renderer.domElement );
+    renderer = new THREE.WebGLRenderer();
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
 
-	controls = new THREE.OrbitControls( camera, renderer.domElement );
-	controls.addEventListener( 'change', render ); // remove when using animation loop
-	// enable animation loop when using damping or autorotation
-	//controls.enableDamping = true;
-	//controls.dampingFactor = 0.25;
-	controls.enableZoom = false;
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls.addEventListener( 'change', render ); // remove when using animation loop
+    // enable animation loop when using damping or autorotation
+    //controls.enableDamping = true;
+    //controls.dampingFactor = 0.25;
+    controls.enableZoom = false;
 
-	initPostprocessing();
+    initPostprocessing();
 
-	window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener( 'resize', onWindowResize, false );
 }
 
 function animate() {
-	requestAnimationFrame( animate );
-	controls.update();
-	render();
+    requestAnimationFrame( animate );
+    controls.update();
+    render();
 }
 
 function onWindowResize() {
 
-	const width = window.innerWidth;
-	const height = window.innerHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-	camera.aspect = width / height;
-	camera.updateProjectionMatrix();
-	renderer.setSize( width, height );
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize( width, height );
 
     setBufferSizes();
 
@@ -289,8 +289,8 @@ function onWindowResize() {
 
 function setBufferSizes() {
 
-	const width = window.innerWidth;
-	const height = window.innerHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     const pixelRatio = renderer.getPixelRatio();
     const newWidth  = Math.floor( width / pixelRatio ) || 1;
@@ -308,8 +308,8 @@ function setBufferSizes() {
 }
 
 function updateUniforms() {
-	const width = window.innerWidth;
-	const height = window.innerHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     for (var v in shaders) {
         let szMul = 1;
@@ -326,13 +326,13 @@ function updateUniforms() {
 
 function initPostprocessing() {
 
-	// Setup depth pass
-	depthMaterial = new THREE.MeshDepthMaterial();
-	depthMaterial.depthPacking = THREE.RGBADepthPacking;
-	depthMaterial.blending = THREE.NoBlending;
+    // Setup depth pass
+    depthMaterial = new THREE.MeshDepthMaterial();
+    depthMaterial.depthPacking = THREE.RGBADepthPacking;
+    depthMaterial.blending = THREE.NoBlending;
 
-	const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-	frameBuffers.depth = new THREE.WebGLRenderTarget(  1, 1, pars );
+    const pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+    frameBuffers.depth = new THREE.WebGLRenderTarget(  1, 1, pars );
     frameBuffers.ao = new THREE.WebGLRenderTarget( 1, 1, pars );
     shaders.ssao.supersampling = SUPERSAMPLING;
     frameBuffers.ao.supersampling = SUPERSAMPLING;
@@ -347,9 +347,9 @@ function initPostprocessing() {
 
     setBufferSizes();
 
-	shaders.ssao.uniforms.cameraNear.value = camera.near;
-	shaders.ssao.uniforms.cameraFar.value = camera.far;
-	shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
+    shaders.ssao.uniforms.cameraNear.value = camera.near;
+    shaders.ssao.uniforms.cameraFar.value = camera.far;
+    shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
 
     shaders.blurX.uniforms.tSource.value = frameBuffers.ao.texture;
     shaders.blurY.uniforms.tSource.value = frameBuffers.tmp.texture;
@@ -368,15 +368,15 @@ function render() {
     shaders.compose.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
 
     //var camera = shadow.camera;
-	// Render depth into frameBuffers.depth
-	scene.overrideMaterial = depthMaterial;
-	renderer.render( scene, camera, frameBuffers.depth, true );
+    // Render depth into frameBuffers.depth
+    scene.overrideMaterial = depthMaterial;
+    renderer.render( scene, camera, frameBuffers.depth, true );
 
     renderer.render( scene, shadow.camera, frameBuffers.shadow, true );
 
     scene.overrideMaterial = shaders.ssao.material;
     renderer.setClearColor(0xffffff, 1);
-	renderer.render(scene, camera, frameBuffers.ao );
+    renderer.render(scene, camera, frameBuffers.ao );
     renderer.setClearColor(0x000000, 0);
 
     flatScene.overrideMaterial = shaders.blurX.material;
@@ -384,7 +384,7 @@ function render() {
     flatScene.overrideMaterial = shaders.blurY.material;
     renderer.render(flatScene, flatCamera, frameBuffers.ao );
 
-	scene.overrideMaterial = null;
+    scene.overrideMaterial = null;
     renderer.render( scene, camera, frameBuffers.diffuse );
 
     scene.overrideMaterial = shaders.compose.material;
@@ -395,7 +395,7 @@ function render() {
         flatScene.overrideMaterial = shaders.downsample.material;
         renderer.render(flatScene, flatCamera );
     } else {
-	    renderer.render(scene, camera);
+        renderer.render(scene, camera);
     }
 
 }
