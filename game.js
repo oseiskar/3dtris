@@ -12,6 +12,7 @@ function Game(pieceGenerator) {
         y: 6,
         z: 15
     };
+
     const that = this;
 
     const blocks = [];
@@ -19,7 +20,7 @@ function Game(pieceGenerator) {
     for (var i=0; i<this.dims.x*this.dims.y*this.dims.z; ++i)
         blocks.push(null);
 
-    var activePiece;
+    var activePiece = null;
 
     function newPiece() {
         activePiece = pieceGenerator();
@@ -29,19 +30,42 @@ function Game(pieceGenerator) {
             Math.round(that.dims.y/2),
             0);
         that.translateToBounds(activePiece);
-        return that.pieceFits(activePiece);
+        if (!that.pieceFits(activePiece)) {
+            activePiece = null;
+        }
     }
+
+    this.isOver = function() {
+        return activePiece === null;
+    };
 
     this.getActiveBlocks = function() {
         return activePiece.getBlocks();
+    };
+
+    this.getCementedBlocks = function() {
+        var r = [];
+        for (let z=0; z<that.dims.z; ++z) {
+            for (let x=0; x<that.dims.x; ++x) {
+                for (let y=0; y<that.dims.y; ++y) {
+                    const b = blocks[blockIndex({x:x,y:y,z:z})];
+                    if (b) r.push(b);
+                }
+            }
+        }
+        return r;
     };
 
     function blockIndex(xyz) {
         return xyz.z*that.dims.x*that.dims.y + xyz.y*that.dims.x + xyz.x;
     }
 
+    function isBlockEmpty(b) {
+         return blocks[blockIndex(b)] === null;
+    }
+
     this.blockFits = function(b) {
-        return that.blockFitsBounds(b) && blocks[blockIndex(b)] === null;
+        return that.blockFitsBounds(b) && isBlockEmpty(b);
     };
 
     function tryMove(func) {
@@ -54,10 +78,42 @@ function Game(pieceGenerator) {
         return false;
     }
 
+    function tryRemoveBottom() {
+        // check
+        for (let x=0; x<that.dims.x; ++x) {
+            for (let y=0; y<that.dims.y; ++y) {
+                if (isBlockEmpty({x:x,y:y,z:0})) {
+                    return false;
+                }
+            }
+        }
+
+        // remove
+        for (let z=0; z<that.dims.z; ++z) {
+            for (let x=0; x<that.dims.x; ++x) {
+                for (let y=0; y<that.dims.y; ++y) {
+                    const trgIdx = blockIndex({x:x,y:y,z:z});
+                    if (z === that.dims.z - 1) {
+                        blocks[trgIdx] = null;
+                    } else {
+                        const srcIdx = blockIndex({x:x,y:y,z:z+1});
+                        blocks[trgIdx] = blocks[srcIdx];
+                        if (blocks[trgIdx]) {
+                            blocks[trgIdx].z--;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     function cementPiece() {
         activePiece.getBlocks().forEach(b => {
-            blocks[blockIndex[b]] = b;
+            blocks[blockIndex(b)] = b;
         });
+        while (tryRemoveBottom());
         return newPiece();
     }
 
