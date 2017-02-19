@@ -40,7 +40,11 @@ function Game(pieceGenerator) {
     };
 
     this.getActiveBlocks = function() {
-        return activePiece.getBlocks();
+        if (activePiece) {
+            return activePiece.getBlocks();
+        } else {
+            return [];
+        }
     };
 
     this.getCementedBlocks = function() {

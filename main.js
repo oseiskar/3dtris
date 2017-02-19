@@ -1,11 +1,12 @@
 "use strict";
-/*globals SHADER_LOADER, THREE, console, window, document, $, requestAnimationFrame */
+/*globals SHADER_LOADER, THREE,
+GameController,
+console, window, document, $, requestAnimationFrame */
 
 var camera, scene, renderer, controls, flatScene, flatCamera;
 
 var depthMaterial;
 var shaders;
-var meshes;
 var frameBuffers = {};
 var shadow;
 
@@ -47,55 +48,60 @@ function planeGeometry(sz) {
     return geometry;
 }
 
-function generateMeshes() {
-    const w = 7;
-    const h = 6;
-    const d = 8;
-
-    const boxSz = 1.0 / Math.max(w, h);
-    const box = new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz );
+function gameRenderer(game) {
 
     function randomByte() {
         return Math.floor(Math.random()*0xff);
     }
 
-    const meshes = [];
-    for (var z=0; z<d; ++z) {
-        for (var x=0; x<w; ++x) {
-            for (var y=0; y<h; ++y) {
+    const w = game.dims.x;
+    const h = game.dims.y;
+    const d = game.dims.z;
 
-                var prob = 1.0 / (z+1);
-                if (Math.random() > prob) continue;
+    const boxSz = 1.0 / Math.max(w, h);
 
-                var material = new THREE.MeshBasicMaterial({
-                    color:
-                        randomByte() << 16 |
-                        randomByte() << 8 |
-                        randomByte()
-                });
-                var mesh = new THREE.Mesh( box, material );
+    const geometries = {
+        box: new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz ),
+        plane: planeGeometry(2)
+    };
 
-                mesh.translateX((x - w*0.5)*boxSz);
+    const materials = {
+        plane: new THREE.MeshBasicMaterial({ color: 0x808080 }),
+        box: new THREE.MeshBasicMaterial({
+            color:
+                randomByte() << 16 |
+                randomByte() << 8 |
+                randomByte()
+        })
+    };
 
-                // flip Z and Y
-                mesh.translateZ((y - h*0.5)*boxSz);
-                mesh.translateY((z+0.5)*boxSz);
-                meshes.push(mesh);
-            }
-        }
-    }
+    return function() {
 
-    // add plane
-    const plane = new THREE.Mesh(
-        planeGeometry(2),
-        new THREE.MeshBasicMaterial({ color: 0x808080 })
-    );
-    plane.rotateX( - Math.PI / 2);
-    plane.doubleSided = true;
-    meshes.push(plane);
+        let blocks = game.getCementedBlocks();
+        blocks = blocks.concat(game.getActiveBlocks());
 
-    return meshes;
+        const meshes = blocks.map(block => {
+            const mesh = new THREE.Mesh( geometries.box, materials.box );
+
+            mesh.translateX((block.x - w*0.5)*boxSz);
+
+            // flip Z and Y
+            mesh.translateZ((block.y - h*0.5)*boxSz);
+            mesh.translateY((block.z+0.5)*boxSz);
+
+            return mesh;
+        });
+
+        // add plane
+        const plane = new THREE.Mesh(geometries.plane, materials.plane);
+        plane.rotateX( - Math.PI / 2);
+        plane.doubleSided = true;
+        meshes.push(plane);
+
+        return meshes;
+    };
 }
+
 
 function deg2rad(deg) { return Math.PI * deg / 180.0; }
 
@@ -245,10 +251,26 @@ function init(loadedShaders) {
     flatScene = new THREE.Scene();
     flatScene.add( flatQuad );
 
-    meshes = generateMeshes();
-    meshes.forEach(function(mesh) {
-        scene.add(mesh);
-    });
+    const game = new GameController();
+
+    const gameRenderFunc = gameRenderer(game.game);
+    let prevMeshes = null;
+
+    function generateMeshes() {
+        console.log("regenerated meshes");
+        if (prevMeshes !== null) {
+            prevMeshes.forEach(mesh => scene.remove(mesh));
+        }
+        prevMeshes = [];
+        gameRenderFunc().forEach(function(mesh) {
+            prevMeshes.push(mesh);
+            scene.add(mesh);
+        });
+    }
+
+    game.changedCallback = generateMeshes;
+    game.run();
+    generateMeshes();
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );

@@ -74,6 +74,7 @@ QUnit.test( "test game controls", function( assert ) {
     }
 
     assert.ok(game.isOver());
+    assert.equal(game.getActiveBlocks().length, 0);
 });
 
 QUnit.test( "test game remove bottom", function( assert ) {
