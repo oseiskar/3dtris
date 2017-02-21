@@ -268,6 +268,46 @@ function init(loadedShaders) {
         });
     }
 
+    function executeAction(controls, key) {
+
+        switch (key) {
+
+            case "q":
+                return controls.rotate('x', 1);
+
+            case "e":
+                return controls.rotate('y', 1);
+
+            case "r":
+                return controls.rotate('z', 1);
+
+            case "ArrowLeft":
+            case "a":
+                return controls.moveXY(-1,0);
+
+            case "ArrowRight":
+            case "d":
+                return controls.moveXY(1,0);
+
+            case "ArrowUp":
+            case "w":
+                return controls.moveXY(0,-1);
+
+            case "ArrowDown":
+            case "s":
+                return controls.moveXY(0,1);
+
+            case " ":
+                return controls.drop();
+        }
+        return null;
+    }
+
+    function keyControls(e)  {
+        const action = executeAction(game.game.controls, e.key);
+        if (action !== null) generateMeshes();
+    }
+
     game.changedCallback = generateMeshes;
     game.run();
     generateMeshes();
@@ -276,6 +316,7 @@ function init(loadedShaders) {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
+    document.body.addEventListener("keydown", keyControls);
 
     controls = new THREE.OrbitControls( camera, renderer.domElement );
     controls.addEventListener( 'change', render ); // remove when using animation loop
@@ -283,6 +324,7 @@ function init(loadedShaders) {
     //controls.enableDamping = true;
     //controls.dampingFactor = 0.25;
     controls.enableZoom = false;
+    controls.enablePan = false;
 
     initPostprocessing();
 

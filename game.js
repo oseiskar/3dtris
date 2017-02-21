@@ -10,7 +10,7 @@ function Game(pieceGenerator) {
     this.dims = {
         x: 5,
         y: 6,
-        z: 15
+        z: 12
     };
 
     const that = this;
