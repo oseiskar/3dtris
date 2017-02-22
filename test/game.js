@@ -110,7 +110,7 @@ QUnit.test( "game remove bottom", function( assert ) {
 
     assert.ok(game.controls.drop());
     cem = game.getCementedBlocks();
-    assert.equal(cem.length, 2 + dims.x*dims.y * 2);
+    assert.equal(cem.length, 2);
 
     assert.equal(cem[0].x, 1);
     assert.equal(cem[0].y, 1);

@@ -82,18 +82,19 @@ function Game(pieceGenerator) {
         return false;
     }
 
-    function tryRemoveBottom() {
-        // check
+    function isLayerFull(z) {
         for (let x=0; x<that.dims.x; ++x) {
             for (let y=0; y<that.dims.y; ++y) {
-                if (isBlockEmpty({x:x,y:y,z:0})) {
+                if (isBlockEmpty({x:x,y:y,z:z})) {
                     return false;
                 }
             }
         }
+        return true;
+    }
 
-        // remove
-        for (let z=0; z<that.dims.z; ++z) {
+    function removeLayer(z) {
+        for (; z<that.dims.z; ++z) {
             for (let x=0; x<that.dims.x; ++x) {
                 for (let y=0; y<that.dims.y; ++y) {
                     const trgIdx = blockIndex({x:x,y:y,z:z});
@@ -109,15 +110,21 @@ function Game(pieceGenerator) {
                 }
             }
         }
+    }
 
-        return true;
+    function tryRemoveLayers() {
+        for (let z=0; z<that.dims.z; ++z) {
+            while (isLayerFull(z)) {
+                removeLayer(z);
+            }
+        }
     }
 
     function cementPiece() {
         activePiece.getBlocks().forEach(b => {
             blocks[blockIndex(b)] = b;
         });
-        while (tryRemoveBottom());
+        tryRemoveLayers();
         return newPiece();
     }
 
