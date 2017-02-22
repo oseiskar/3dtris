@@ -71,6 +71,8 @@ function gameRenderer(game) {
 
     const boxSz = 1.0 / Math.max(w, h);
 
+    const centerZ = d * boxSz * 0.33;
+
     const geometries = {
         box: new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz ),
         plane: planeGeometry(2)
@@ -91,13 +93,14 @@ function gameRenderer(game) {
 
             // flip Z and Y
             mesh.translateZ((block.y - h*0.5)*boxSz);
-            mesh.translateY((block.z+0.5)*boxSz);
+            mesh.translateY((block.z+0.5)*boxSz - centerZ);
 
             return mesh;
         });
 
         // add plane
         const plane = new THREE.Mesh(geometries.plane, planeMaterial);
+        plane.translateY(-centerZ);
         plane.rotateX( - Math.PI / 2);
         plane.doubleSided = true;
         meshes.push(plane);
