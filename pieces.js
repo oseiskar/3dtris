@@ -1,15 +1,17 @@
 "use strict";
 
-function Block(x, y, z) {
+function Block(x, y, z, material) {
     this.x = x;
     this.y = y;
     this.z = z;
+    this.material = material;
 }
 
 Block.prototype.assign = function(other) {
     this.x = other.x;
     this.y = other.y;
     this.z = other.z;
+    this.material = other.material;
     return this;
 };
 
@@ -32,7 +34,7 @@ Block.prototype.rotated = function(axis, sign) {
 };
 
 Block.prototype.translated = function(dx, dy, dz) {
-    return new Block(this.x + dx, this.y + dy, this.z + dz);
+    return new Block(this.x + dx, this.y + dy, this.z + dz, this.material);
 };
 
 function Piece(blocks_, center_) {

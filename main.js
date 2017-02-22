@@ -12,6 +12,7 @@ var shadow;
 
 const SUPERSAMPLING = 1;
 const SSAO_SAMPLES = Math.max(2, 8 / SUPERSAMPLING);
+const N_BLOCK_MATERIALS = 10;
 
 (function(){
 
@@ -21,6 +22,19 @@ const SSAO_SAMPLES = Math.max(2, 8 / SUPERSAMPLING);
     });
 
 })();
+
+function randomByte() {
+    return Math.floor(Math.random()*0xff);
+}
+
+function randomMaterial() {
+    return new THREE.MeshBasicMaterial({
+        color:
+            randomByte() << 16 |
+            randomByte() << 8 |
+            randomByte()
+    });
+}
 
 function planeGeometry(sz) {
     var geometry = new THREE.Geometry();
@@ -50,9 +64,6 @@ function planeGeometry(sz) {
 
 function gameRenderer(game) {
 
-    function randomByte() {
-        return Math.floor(Math.random()*0xff);
-    }
 
     const w = game.dims.x;
     const h = game.dims.y;
@@ -65,15 +76,7 @@ function gameRenderer(game) {
         plane: planeGeometry(2)
     };
 
-    const materials = {
-        plane: new THREE.MeshBasicMaterial({ color: 0x808080 }),
-        box: new THREE.MeshBasicMaterial({
-            color:
-                randomByte() << 16 |
-                randomByte() << 8 |
-                randomByte()
-        })
-    };
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x808080 });
 
     return function() {
 
@@ -81,7 +84,8 @@ function gameRenderer(game) {
         blocks = blocks.concat(game.getActiveBlocks());
 
         const meshes = blocks.map(block => {
-            const mesh = new THREE.Mesh( geometries.box, materials.box );
+            console.log(block);
+            const mesh = new THREE.Mesh( geometries.box, block.material );
 
             mesh.translateX((block.x - w*0.5)*boxSz);
 
@@ -93,7 +97,7 @@ function gameRenderer(game) {
         });
 
         // add plane
-        const plane = new THREE.Mesh(geometries.plane, materials.plane);
+        const plane = new THREE.Mesh(geometries.plane, planeMaterial);
         plane.rotateX( - Math.PI / 2);
         plane.doubleSided = true;
         meshes.push(plane);
@@ -251,13 +255,17 @@ function init(loadedShaders) {
     flatScene = new THREE.Scene();
     flatScene.add( flatQuad );
 
-    const game = new GameController();
+    const blockMaterials = Array.from(new Array(N_BLOCK_MATERIALS), () => randomMaterial());
+    function pieceDecorator() {
+        return blockMaterials[Math.floor(Math.random()*blockMaterials.length)];
+    }
+
+    const game = new GameController(pieceDecorator);
 
     const gameRenderFunc = gameRenderer(game.game);
     let prevMeshes = null;
 
     function generateMeshes() {
-        console.log("regenerated meshes");
         if (prevMeshes !== null) {
             prevMeshes.forEach(mesh => scene.remove(mesh));
         }
