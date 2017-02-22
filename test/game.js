@@ -1,4 +1,4 @@
-QUnit.test( "test game blockFitsBounds", function( assert ) {
+QUnit.test( "game blockFitsBounds", function( assert ) {
 
     const game = new Game();
 
@@ -7,7 +7,7 @@ QUnit.test( "test game blockFitsBounds", function( assert ) {
     assert.ok( !game.blockFitsBounds(new Block(0,game.dims.y,0)) );
 });
 
-QUnit.test( "test game translateToBounds", function( assert ) {
+QUnit.test( "game translateToBounds", function( assert ) {
 
     const game = new Game();
     const piece = new Piece([new Block(-2,0,0), new Block(0,-1,0)]);
@@ -27,7 +27,7 @@ QUnit.test( "test game translateToBounds", function( assert ) {
     assert.equal(blocks[1].y, game.dims.y-2);
 });
 
-QUnit.test( "test game controls", function( assert ) {
+QUnit.test( "game controls", function( assert ) {
 
     function pieceGenerator() {
         return new Piece([
@@ -77,7 +77,7 @@ QUnit.test( "test game controls", function( assert ) {
     assert.equal(game.getActiveBlocks().length, 0);
 });
 
-QUnit.test( "test game remove bottom", function( assert ) {
+QUnit.test( "game remove bottom", function( assert ) {
 
     const dims = new Game().dims;
 
