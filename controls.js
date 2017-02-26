@@ -37,6 +37,7 @@ function executeAction(controls, key) {
             return controls.moveXY(0,1);
 
         case " ":
+            $("#help-text").hide(1000);
             return controls.drop();
     }
     return null;

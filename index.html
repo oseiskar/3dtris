@@ -10,9 +10,21 @@
                 background-color: #000000;
                 overflow: hidden;
             }
+            #help-text {
+                position: absolute;
+                /*right: 270px;*/
+                width: 100%;
+                bottom: 10px;
+                text-align: center;
+                font-weight: normal;
+                color: #cccccc;
+            }
         </style>
     </head>
     <body>
+        <div id="help-text">
+            Move with arrows or WASD, rotate with Q &amp; E (X-axis), 2 &amp; X (Y-axis) and R &amp; T (Z-axis), drop with SPACE
+        </div>
         <script id="ssao-vertex-shader" type="x-shader/x-vertex">
             varying vec3 vScreenNormal;
 
@@ -49,6 +61,7 @@
         <script src="js-libs/jquery-2.1.4.min.js"></script>
         <script src="js-libs/three.min.js"></script>
         <script src="js-libs/OrbitControls.js"></script>
+        <script src="js-libs/Detector.js"></script>
         <script src="js-libs/ShaderLoader.min.js"></script>
         <script src="js-libs/stats.min.js"></script>
         <script src="js-libs/parseQueryString.js"></script>

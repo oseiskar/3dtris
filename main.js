@@ -1,7 +1,12 @@
 "use strict";
 /*globals SHADER_LOADER, THREE,
-GameController, executeAction, Stats,
+GameController, executeAction, Stats, Detector,
 window, document, $, requestAnimationFrame */
+
+if ( !Detector.webgl ) {
+    Detector.addGetWebGLMessage();
+    throw "failed";
+}
 
 var camera, scene, renderer, controls, flatScene, flatCamera, stats;
 
