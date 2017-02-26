@@ -1,9 +1,9 @@
 "use strict";
 /*globals SHADER_LOADER, THREE,
-GameController, executeAction
-console, window, document, $, requestAnimationFrame */
+GameController, executeAction, Stats,
+window, document, $, requestAnimationFrame */
 
-var camera, scene, renderer, controls, flatScene, flatCamera;
+var camera, scene, renderer, controls, flatScene, flatCamera, stats;
 
 var depthMaterial;
 var shaders;
@@ -64,7 +64,6 @@ function planeGeometry(sz) {
 
 function gameRenderer(game) {
 
-
     const w = game.dims.x;
     const h = game.dims.y;
     const d = game.dims.z;
@@ -88,7 +87,6 @@ function gameRenderer(game) {
         blocks = blocks.concat(game.getActiveBlocks());
 
         const meshes = blocks.map(block => {
-            console.log(block);
             const mesh = new THREE.Mesh( geometries.box, block.material );
 
             mesh.translateX((block.x - w*0.5 + 0.5)*boxSz);
@@ -148,8 +146,6 @@ function initShadow() {
         .makeBasis(shadowX, shadowY, shadowZ.negate())
         .setPosition(pos);
     camera.updateMatrixWorld( true );
-
-    console.log(camera);
 
     return {
         size: new THREE.Vector2(width, height),
@@ -297,11 +293,23 @@ function init(loadedShaders) {
     game.run();
     generateMeshes();
 
+    const container = document.createElement( 'div' );
+    document.body.appendChild( container );
+
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
     document.body.addEventListener("keydown", keyControls);
+
+    container.appendChild( renderer.domElement );
+
+    if ($.urlParam("debug")) {
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
+        container.appendChild( stats.domElement );
+    }
 
     controls = new THREE.OrbitControls( camera, renderer.domElement );
     controls.addEventListener( 'change', render ); // remove when using animation loop
@@ -320,6 +328,7 @@ function animate() {
     requestAnimationFrame( animate );
     controls.update();
     render();
+    if (stats) stats.update();
 }
 
 function onWindowResize() {
@@ -416,7 +425,7 @@ function render() {
 
     shaders.compose.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
 
-        renderer.setClearColor(0x808080, 1);
+    renderer.setClearColor(0x808080, 1);
     //var camera = shadow.camera;
     // Render depth into frameBuffers.depth
     scene.overrideMaterial = depthMaterial;
