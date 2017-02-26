@@ -1,6 +1,6 @@
 "use strict";
 /*globals SHADER_LOADER, THREE,
-GameController,
+GameController, executeAction
 console, window, document, $, requestAnimationFrame */
 
 var camera, scene, renderer, controls, flatScene, flatCamera;
@@ -75,10 +75,12 @@ function gameRenderer(game) {
 
     const geometries = {
         box: new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz ),
-        plane: planeGeometry(2)
+        plane: planeGeometry(0.5),
+        circle: new THREE.CircleGeometry( 3.0, 100 )
     };
 
-    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x808080 });
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xa0a0a0 });
+    const circleMaterial = new THREE.MeshBasicMaterial({ color: 0xc0c0c0 });
 
     return function() {
 
@@ -89,10 +91,10 @@ function gameRenderer(game) {
             console.log(block);
             const mesh = new THREE.Mesh( geometries.box, block.material );
 
-            mesh.translateX((block.x - w*0.5)*boxSz);
+            mesh.translateX((block.x - w*0.5 + 0.5)*boxSz);
 
             // flip Z and Y
-            mesh.translateZ((block.y - h*0.5)*boxSz);
+            mesh.translateZ((block.y - h*0.5 + 0.5)*boxSz);
             mesh.translateY((block.z+0.5)*boxSz - centerZ);
 
             return mesh;
@@ -104,6 +106,13 @@ function gameRenderer(game) {
         plane.rotateX( - Math.PI / 2);
         plane.doubleSided = true;
         meshes.push(plane);
+
+        // add circle
+        const circle = new THREE.Mesh(geometries.circle, circleMaterial);
+        circle.translateY(-centerZ - 0.01);
+        circle.rotateX( - Math.PI / 2);
+        circle.doubleSided = true;
+        meshes.push(circle);
 
         return meshes;
     };
@@ -158,7 +167,7 @@ function init(loadedShaders) {
 
     shadow = initShadow();
 
-    camera.position.z = 3;
+    camera.position.set(-0.3, 3, 1);
     scene = new THREE.Scene();
 
     const SSAO_BLUR_SAMPLES = 5;
@@ -277,41 +286,6 @@ function init(loadedShaders) {
             prevMeshes.push(mesh);
             scene.add(mesh);
         });
-    }
-
-    function executeAction(controls, key) {
-
-        switch (key) {
-
-            case "q":
-                return controls.rotate('x', 1);
-
-            case "e":
-                return controls.rotate('y', 1);
-
-            case "r":
-                return controls.rotate('z', 1);
-
-            case "ArrowLeft":
-            case "a":
-                return controls.moveXY(-1,0);
-
-            case "ArrowRight":
-            case "d":
-                return controls.moveXY(1,0);
-
-            case "ArrowUp":
-            case "w":
-                return controls.moveXY(0,-1);
-
-            case "ArrowDown":
-            case "s":
-                return controls.moveXY(0,1);
-
-            case " ":
-                return controls.drop();
-        }
-        return null;
     }
 
     function keyControls(e)  {
@@ -442,6 +416,7 @@ function render() {
 
     shaders.compose.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
 
+        renderer.setClearColor(0x808080, 1);
     //var camera = shadow.camera;
     // Render depth into frameBuffers.depth
     scene.overrideMaterial = depthMaterial;
@@ -464,6 +439,7 @@ function render() {
 
     scene.overrideMaterial = shaders.compose.material;
 
+    renderer.setClearColor(0x808080, 1);
     if (SUPERSAMPLING > 1) {
         renderer.render(scene, camera, frameBuffers.final);
 
@@ -472,5 +448,6 @@ function render() {
     } else {
         renderer.render(scene, camera);
     }
+    renderer.setClearColor(0x000000, 0);
 
 }
