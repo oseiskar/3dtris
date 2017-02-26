@@ -24,10 +24,23 @@ function Game(pieceGenerator) {
 
     function newPiece() {
         activePiece = pieceGenerator();
+
+        function randomRot(axis) {
+            const limit = Math.random()*4;
+            for (var i=0; i<limit; ++i) {
+                activePiece.rotate(axis, 1);
+            }
+        }
+
+        // too lazy to generate the rotation group correctly
+        randomRot('x');
+        randomRot('y');
+        randomRot('z');
+
         activePiece.translateBeyond('z', that.dims.z-1, 1);
         activePiece.translate(
-            Math.round(that.dims.x/2),
-            Math.round(that.dims.y/2),
+            Math.floor(Math.random()*that.dims.x),
+            Math.floor(Math.random()*that.dims.y),
             0);
         that.translateToBounds(activePiece);
         if (!that.pieceFits(activePiece)) {
