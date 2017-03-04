@@ -27,9 +27,12 @@ function Game(pieceGenerator) {
 
         function randomRot(axis) {
             const limit = Math.random()*4;
-            for (var i=0; i<limit; ++i) {
-                activePiece.rotate(axis, 1);
-            }
+            tryMove(p => {
+                for (var i=0; i<limit; ++i) {
+                    p.rotate(axis, 1);
+                }
+                that.translateToBounds(p);
+            });
         }
 
         // too lazy to generate the rotation group correctly
