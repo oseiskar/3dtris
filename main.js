@@ -8,7 +8,7 @@ if ( !Detector.webgl ) {
     throw "failed";
 }
 
-var camera, scene, renderer, controls, flatScene, flatCamera, stats;
+var camera, scene, renderer, controls, flatScene, flatCamera, stats, game;
 
 var depthMaterial;
 var shaders;
@@ -83,16 +83,25 @@ function gameRenderer(game) {
         circle: new THREE.CircleGeometry( 3.0, 100 )
     };
 
-    const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xa0a0a0 });
-    const circleMaterial = new THREE.MeshBasicMaterial({ color: 0xc0c0c0 });
+    const materials = {
+        plane: new THREE.MeshBasicMaterial({ color: 0xa0a0a0 }),
+        circle: new THREE.MeshBasicMaterial({ color: 0xc0c0c0 }),
+        lost: new THREE.MeshBasicMaterial({ color: 0xcccccc })
+    };
 
     return function() {
+
+        $("#score").text(game.score);
 
         let blocks = game.getCementedBlocks();
         blocks = blocks.concat(game.getActiveBlocks());
 
         const meshes = blocks.map(block => {
-            const mesh = new THREE.Mesh( geometries.box, block.material );
+            var material = block.material;
+            if (game.isOver() && false) {
+                material = materials.lost;
+            }
+            const mesh = new THREE.Mesh( geometries.box, material );
 
             mesh.translateX((block.x - w*0.5 + 0.5)*boxSz);
 
@@ -104,14 +113,14 @@ function gameRenderer(game) {
         });
 
         // add plane
-        const plane = new THREE.Mesh(geometries.plane, planeMaterial);
+        const plane = new THREE.Mesh(geometries.plane, materials.plane);
         plane.translateY(-centerZ);
         plane.rotateX( - Math.PI / 2);
         plane.doubleSided = true;
         meshes.push(plane);
 
         // add circle
-        const circle = new THREE.Mesh(geometries.circle, circleMaterial);
+        const circle = new THREE.Mesh(geometries.circle, materials.circle);
         circle.translateY(-centerZ - 0.01);
         circle.rotateX( - Math.PI / 2);
         circle.doubleSided = true;
@@ -273,9 +282,10 @@ function init(loadedShaders) {
         return blockMaterials[Math.floor(Math.random()*blockMaterials.length)];
     }
 
-    const game = new GameController(pieceDecorator);
+    const gameController = new GameController(pieceDecorator);
+    game = gameController.game;
 
-    const gameRenderFunc = gameRenderer(game.game);
+    const gameRenderFunc = gameRenderer(game);
     let prevMeshes = null;
 
     function generateMeshes() {
@@ -290,12 +300,15 @@ function init(loadedShaders) {
     }
 
     function keyControls(e)  {
-        const action = executeAction(game.game.controls, e.key);
+        const action = executeAction(game.controls, e.key);
         if (action !== null) generateMeshes();
+        if (game.isOver()) {
+            $('#game-over').show();
+        }
     }
 
-    game.changedCallback = generateMeshes;
-    game.run();
+    gameController.changedCallback = generateMeshes;
+    gameController.run();
     generateMeshes();
 
     const container = document.createElement( 'div' );
@@ -385,6 +398,9 @@ function updateUniforms() {
     shaders.ssao.uniforms.projectionXY.value.set(
         camera.projectionMatrix.elements[0],
         camera.projectionMatrix.elements[5]);
+
+    shaders.ssao.uniforms.cameraNear.value = camera.near;
+    shaders.ssao.uniforms.cameraFar.value = camera.far;
 }
 
 function initPostprocessing() {
@@ -402,6 +418,7 @@ function initPostprocessing() {
     frameBuffers.diffuse = new THREE.WebGLRenderTarget( 1, 1, pars );
     frameBuffers.diffuse.supersampling = SUPERSAMPLING;
     frameBuffers.tmp = new THREE.WebGLRenderTarget( 1, 1, pars );
+    frameBuffers.tmp2 = new THREE.WebGLRenderTarget( 1, 1, pars );
     frameBuffers.final = new THREE.WebGLRenderTarget( 1, 1, pars );
     frameBuffers.final.supersampling = SUPERSAMPLING;
     shaders.compose.supersampling = SUPERSAMPLING;
@@ -410,8 +427,11 @@ function initPostprocessing() {
 
     setBufferSizes();
 
-    shaders.ssao.uniforms.cameraNear.value = camera.near;
-    shaders.ssao.uniforms.cameraFar.value = camera.far;
+    updateUniforms();
+}
+
+function render() {
+
     shaders.ssao.uniforms.tDepth.value = frameBuffers.depth.texture;
 
     shaders.blurX.uniforms.tSource.value = frameBuffers.ao.texture;
@@ -422,11 +442,6 @@ function initPostprocessing() {
     shaders.compose.uniforms.tShadow.value = frameBuffers.shadow.texture;
 
     shaders.downsample.uniforms.tSource.value = frameBuffers.final.texture;
-
-    updateUniforms();
-}
-
-function render() {
 
     shaders.compose.uniforms.cameraMatrix.value.copy(camera.matrixWorld);
 
@@ -454,14 +469,30 @@ function render() {
     scene.overrideMaterial = shaders.compose.material;
 
     renderer.setClearColor(0x808080, 1);
+
+    var finalTarget = null;
+    if (game.isOver()) {
+        finalTarget = frameBuffers.tmp;
+    }
+
     if (SUPERSAMPLING > 1) {
         renderer.render(scene, camera, frameBuffers.final);
 
         flatScene.overrideMaterial = shaders.downsample.material;
-        renderer.render(flatScene, flatCamera );
+        renderer.render(flatScene, flatCamera, finalTarget );
     } else {
-        renderer.render(scene, camera);
+        renderer.render(scene, camera, finalTarget );
     }
+
+    if (game.isOver()) {
+        flatScene.overrideMaterial = shaders.blurX.material;
+        shaders.blurX.uniforms.tSource.value = frameBuffers.tmp.texture;
+        renderer.render(flatScene, flatCamera, frameBuffers.tmp2 );
+        flatScene.overrideMaterial = shaders.blurY.material;
+        shaders.blurY.uniforms.tSource.value = frameBuffers.tmp2.texture;
+        renderer.render(flatScene, flatCamera );
+    }
+
     renderer.setClearColor(0x000000, 0);
 
 }

@@ -13,6 +13,8 @@ function Game(pieceGenerator) {
         z: 14
     };
 
+    this.score = 0;
+
     const that = this;
 
     const blocks = [];
@@ -24,6 +26,7 @@ function Game(pieceGenerator) {
 
     function newPiece() {
         activePiece = pieceGenerator();
+        that.score += 1;
 
         function randomRot(axis) {
             const limit = Math.random()*4;
@@ -110,6 +113,7 @@ function Game(pieceGenerator) {
     }
 
     function removeLayer(z) {
+        that.score += 100;
         for (; z<that.dims.z; ++z) {
             for (let x=0; x<that.dims.x; ++x) {
                 for (let y=0; y<that.dims.y; ++y) {

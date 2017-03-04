@@ -9,15 +9,46 @@
                 margin: 0px;
                 background-color: #000000;
                 overflow: hidden;
+                font-family: sans-serif;
+                color: white;
             }
             #help-text {
                 position: absolute;
-                /*right: 270px;*/
                 width: 100%;
                 bottom: 10px;
                 text-align: center;
                 font-weight: normal;
-                color: #cccccc;
+                user-select: none;
+            }
+            .score {
+                position: absolute;
+                top: 3%;
+                right: 3%;
+                text-align: right;
+                font-weight: normal;
+                font-size: 20pt;
+                text-shadow: 2px 2px 3px #000000;
+            }
+
+            #score {
+                font-weight: bold;
+            }
+
+            #game-over {
+                position: absolute;
+                /*right: 270px;*/
+                width: 100%;
+                top: 40%;
+                text-align: center;
+                font-size: 60pt;
+                color: white;
+                display: none;
+                /*background-color: rgba(0,0,0,0.5);
+                padding: 20px;
+                border-top: 1px solid black;
+                border-bottom: 1px solid black;*/
+                user-select: none;
+                text-shadow: 3px 3px 15px #000000;
             }
         </style>
     </head>
@@ -25,6 +56,15 @@
         <div id="help-text">
             Move with arrows or WASD, rotate with Q &amp; E (X-axis), 2 &amp; X (Y-axis) and R &amp; T (Z-axis), drop with SPACE
         </div>
+        <div id="game-over">
+            Game over
+        </div>
+        <div class="score">
+            Score:
+            <span id="score">
+            </span>
+        </div>
+
         <script id="ssao-vertex-shader" type="x-shader/x-vertex">
             varying vec3 vScreenNormal;
 
