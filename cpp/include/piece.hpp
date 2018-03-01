@@ -17,10 +17,14 @@ public:
     : center(center_), blocks(blocks_) {}
 
     Piece(const Piece& other) = default;
+    std::vector<Block> getBlocks() const;
 
     Piece translated(Pos3d) const;
     Piece rotated(Rotation) const;
-    std::vector<Block> getBlocks() const;
+
+    // would not need access to private data
+    Piece translatedBeyond(Axis axis, int limit, int direction) const;
+    int getExtent(Axis axis, int direction) const;
 };
 
 namespace block_methods {

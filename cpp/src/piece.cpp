@@ -1,6 +1,16 @@
 #include "piece.hpp"
+#include <array>
 
 namespace pos_methods {
+
+    Pos3d fromArray(std::array<int, 3> arr) {
+        return Pos3d { arr[0], arr[1], arr[2] };
+    }
+
+    std::array<int, 3> toArray(const Pos3d& pos) {
+        return { pos.x, pos.y, pos.z };
+    }
+
     Pos3d rotate(Pos3d pos, Rotation rot) {
 
         // 90 degeree rotation along X, Y or Z means exchanging/swapping
@@ -10,17 +20,17 @@ namespace pos_methods {
         // which two axes are swapped by this rotation (order is important)
         int exAx0, exAx1;
         switch (rot.axis) {
-        case Rotation::Axis::X:
-            exAx0 = Rotation::Axis::Y;
-            exAx1 = Rotation::Axis::Z;
+        case Axis::X:
+            exAx0 = Axis::Y;
+            exAx1 = Axis::Z;
             break;
-        case Rotation::Axis::Y:
-            exAx0 = Rotation::Axis::Z;
-            exAx1 = Rotation::Axis::X;
+        case Axis::Y:
+            exAx0 = Axis::Z;
+            exAx1 = Axis::X;
             break;
-        case Rotation::Axis::Z:
-            exAx0 = Rotation::Axis::X;
-            exAx1 = Rotation::Axis::Y;
+        case Axis::Z:
+            exAx0 = Axis::X;
+            exAx1 = Axis::Y;
             break;
         }
 
@@ -28,14 +38,24 @@ namespace pos_methods {
         const int sign = rot.direction == Rotation::Direction::CCW ? 1 : -1;
 
         // before & after
-        const int p0[3] = { pos.x, pos.y, pos.z };
-        int p1[3] = { pos.x, pos.y, pos.z };
+        auto p0 = toArray(pos);
+        decltype(p0) p1 = p0;
 
         // swap & sign flip
         p1[exAx0] = -sign*p0[exAx1];
         p1[exAx1] = sign*p0[exAx0];
 
-        return Pos3d { p1[0], p1[1], p1[2] };
+        return fromArray(p1);
+    }
+
+    Pos3d setElement(const Pos3d &pos, Axis ax, int value) {
+        auto a = toArray(pos);
+        a[ax] = value;
+        return fromArray(a);
+    }
+
+    int getElement(const Pos3d &pos, Axis ax) {
+        return toArray(pos)[ax];
     }
 }
 
@@ -57,12 +77,13 @@ namespace block_methods {
 }
 
 #include <algorithm>
+#include <iterator>
 
 // snippet from http://blog.madhukaraphatak.com/functional-programming-in-c++/
 template <typename Collection,typename unop>
-  Collection map(Collection col,unop op) {
-  std::transform(col.begin(),col.end(),col.begin(),op);
-  return col;
+Collection map(Collection col, unop op) {
+    std::transform(col.begin(), col.end(), col.begin(), op);
+    return col;
 }
 
 Piece Piece::translated(Pos3d delta) const {
@@ -77,6 +98,36 @@ Piece Piece::rotated(Rotation rot) const {
         center,
         map(blocks, [rot](Block b){ return block_methods::rotate(b, rot); })
     };
+}
+
+int Piece::getExtent(Axis axis, int direction) const {
+    if (direction != 1 && direction != -1) abort();
+
+    auto blocks = getBlocks();
+
+    std::vector<int> coords;
+    for (auto b : blocks) {
+        coords.push_back(pos_methods::getElement(b.pos, axis));
+    }
+
+    return direction > 0 ?
+        *std::max_element(coords.begin(), coords.end()) :
+        *std::min_element(coords.begin(), coords.end());
+}
+
+Piece Piece::translatedBeyond(Axis axis, int limit, int direction) const {
+    const int extreme = getExtent(axis, -direction);
+    const int diff = (limit - extreme)*direction;
+
+    if (diff > 0) {
+        return translated(
+            pos_methods::setElement(
+                Pos3d { 0, 0, 0 },
+                axis,
+                diff*direction)
+        );
+    }
+    return *this;
 }
 
 std::vector<Block> Piece::getBlocks() const {

@@ -1,6 +1,7 @@
 #ifndef __GAME_HPP__
 #define __GAME_HPP__
 #include <vector>
+#include <memory>
 
 struct Pos3d {
     int x, y, z;
@@ -11,8 +12,11 @@ struct Block {
     int material;
 };
 
+enum Axis {
+    X, Y, Z
+};
+
 struct Rotation {
-    enum Axis { X, Y, Z };
     enum Direction { CW, CCW };
 
     Axis axis;
@@ -21,19 +25,23 @@ struct Rotation {
 
 class Game {
 public:
-    virtual std::vector<Block> getActiveBlocks() const;
-    virtual std::vector<Block> getCementedBlocks() const;
-    virtual bool isOver() const;
-    virtual int getScore() const;
+    virtual std::vector<Block> getActiveBlocks() const = 0;
+    virtual std::vector<Block> getCementedBlocks() const = 0;
+    virtual bool isOver() const = 0;
+    virtual int getScore() const = 0;
 
     // timed events
-    virtual void tick(int dt);
+    virtual void tick(int dt) = 0;
 
     // controls
-    virtual bool moveDown();
-    virtual bool moveXY(int dx, int dy);
-    virtual bool rotate(Rotation);
-    virtual bool drop();
+    virtual bool moveDown() = 0;
+    virtual bool moveXY(int dx, int dy) = 0;
+    virtual bool rotate(Rotation) = 0;
+    virtual bool drop() = 0;
+
+    virtual ~Game() = default;
 };
+
+std::unique_ptr<Game> buildGame();
 
 #endif
