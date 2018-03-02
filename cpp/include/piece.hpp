@@ -1,7 +1,7 @@
 #ifndef __PIECE_HPP__
 #define __PIECE_HPP__
 
-#include "game.hpp"
+#include "api.hpp"
 #include <vector>
 
 struct Piece {
@@ -36,6 +36,8 @@ namespace pos_methods {
     inline Pos3d sum(Pos3d a, Pos3d b) {
         return Pos3d { a.x + b.x, a.y + b.y, a.z + b.z };
     }
+
+    int getElement(const Pos3d &pos, Axis ax);
 }
 
 #endif

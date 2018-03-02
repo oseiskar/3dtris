@@ -1,8 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include "game.hpp"
 #include "piece.hpp"
-#include "game-private.hpp"
+#include "game.hpp"
 
 TEST_CASE( "Pos3d", "[pos-3d]" ) {
     SECTION("sum") {
@@ -108,13 +107,58 @@ TEST_CASE( "Piece", "[piece]" ) {
 }
 
 
-TEST_CASE( "Game", "[game]" ) {
+TEST_CASE( "GameBox", "[game-box]" ) {
+    GameBox box(Pos3d { 5, 6, 15 });
 
-    SECTION("position is within bounds") {
-        ConcreteGame game;
+    SECTION("position isWithinBounds") {
+        REQUIRE( box.contains(Pos3d { 0, 0, 0 }) );
+        REQUIRE( box.contains(Pos3d { 4, 0, 0 }) );
+        REQUIRE( !box.contains(Pos3d { 0, 6, 0 }) );
+    }
 
-        REQUIRE( game.isWithinBounds(Pos3d { 0, 0, 0 }) );
-        REQUIRE( game.isWithinBounds(Pos3d { game.dims.x-1, 0, 0 }) );
-        REQUIRE( !game.isWithinBounds(Pos3d { 0, game.dims.y, 0 }) );
+    SECTION("translateToBounds") {
+        Piece piece {
+            Pos3d { 0, 0, 0 },
+            {
+                Block { Pos3d { -2, 0, 0 }, 10 },
+                Block { Pos3d { 0, -1,  0}, 11 },
+            }
+        };
+
+        REQUIRE( !box.contains(piece) );
+        piece = piece.translated(Pos3d { 0, 10, 0 });
+        REQUIRE( !box.contains(piece) );
+
+        piece = box.translateToBounds(piece);
+        REQUIRE(box.contains(piece));
+
+        auto blocks = piece.getBlocks();
+        REQUIRE( blocks[0].pos.x == 0 );
+        REQUIRE( blocks[0].pos.y == 5);
+        REQUIRE( blocks[1].pos.x == 2);
+        REQUIRE( blocks[1].pos.y == 4);
+    }
+
+    SECTION("size") {
+        REQUIRE( box.size() == 5*6*15 );
+    }
+}
+
+TEST_CASE( "CementedBlockArray" "[cemenbed-block-array]") {
+    GameBox box(Pos3d { 5, 6, 15 });
+
+    SECTION("get and set blocks") {
+        CementedBlockArray blocks(box);
+
+        blocks.setBlock(Block{Pos3d { 0, 3, 2 }, 100});
+        REQUIRE( !blocks.hasBlock(Pos3d{0, 3, 1}) );
+        REQUIRE( blocks.hasBlock(Pos3d{0, 3, 2}) );
+
+        auto ne = blocks.getNonEmptyBlocks();
+        REQUIRE( ne.size() == 1 );
+        REQUIRE( ne[0].pos.x == 0 );
+        REQUIRE( ne[0].pos.y == 3 );
+        REQUIRE( ne[0].pos.z == 2 );
+        REQUIRE( ne[0].material == 100 );
     }
 }

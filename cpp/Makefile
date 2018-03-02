@@ -9,7 +9,7 @@ bin/main: $(OBJ)
 bin/testsuite: $(OBJ) test/testsuite.cpp
 	g++ -o $@ $^ $(CFLAGS) $(LIBS) -Ivendor
 
-obj/%.o: src/%.cpp include/%.hpp
+obj/%.o: src/%.cpp include/%.hpp include/api.hpp
 	g++ -c -o $@ $< $(CFLAGS)
 
 dirs:
