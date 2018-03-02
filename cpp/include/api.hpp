@@ -34,10 +34,9 @@ public:
     virtual void tick(int dt) = 0;
 
     // controls
-    virtual bool moveDown() = 0;
     virtual bool moveXY(int dx, int dy) = 0;
     virtual bool rotate(Rotation) = 0;
-    virtual bool drop() = 0;
+    virtual void drop() = 0;
 
     virtual ~Game() = default;
 };

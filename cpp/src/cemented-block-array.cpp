@@ -42,12 +42,14 @@ bool CementedBlockArray::isLayerFull(int z) const {
     return true;
 }
 
-void CementedBlockArray::removeLayer(int z) {
-    for (int x = 0; x < box.dims.x; ++x) {
-        for (int y = 0; y < box.dims.y; ++y) {
-            const Pos3d pos {x,y,z}, top {x,y,z+1};
-            if (z == box.dims.z-1 || !hasBlock(top)) clearBlock(pos);
-            else setBlock(Block{pos, getBlockMaterial(top)});
+void CementedBlockArray::removeLayer(int zToRemove) {
+    for (int z = zToRemove; z < box.dims.z; ++z) {
+        for (int x = 0; x < box.dims.x; ++x) {
+            for (int y = 0; y < box.dims.y; ++y) {
+                const Pos3d pos {x,y,z}, top {x,y,z+1};
+                if (z == box.dims.z-1 || !hasBlock(top)) clearBlock(pos);
+                else setBlock(Block{pos, getBlockMaterial(top)});
+            }
         }
     }
 }
@@ -64,4 +66,16 @@ std::vector<Block> CementedBlockArray::getNonEmptyBlocks() const {
         }
     }
     return blocks;
+}
+
+bool CementedBlockArray::pieceFits(const Piece& piece) const {
+    for (Block b : piece.getBlocks()) {
+        if (!box.contains(b.pos) || hasBlock(b.pos)) return false;
+    }
+    return true;
+}
+
+void CementedBlockArray::cementPiece(const Piece& piece) {
+    if (!pieceFits(piece)) abort();
+    for (Block b : piece.getBlocks()) setBlock(b);
 }

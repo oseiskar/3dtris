@@ -17,11 +17,16 @@ private:
 public:
     CementedBlockArray(const GameBox& gameBox);
 
-    void setBlock(const Block& block);
-    bool hasBlock(Pos3d pos) const;
+    bool pieceFits(const Piece& piece) const;
+    void cementPiece(const Piece& piece);
+    
     bool isLayerFull(int z) const;
     void removeLayer(int z);
     std::vector<Block> getNonEmptyBlocks() const;
+
+    // helpers
+    void setBlock(const Block& block);
+    bool hasBlock(Pos3d pos) const;
 };
 
 #endif

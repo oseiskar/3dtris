@@ -20,20 +20,25 @@ public:
     void tick(int dt) override;
 
     // controls
-    bool moveDown() override;
     bool moveXY(int dx, int dy) override;
     bool rotate(Rotation) override;
-    bool drop() override;
+    void drop() override;
 
     virtual ~ConcreteGame() = default;
 
 private:
+    bool moveDown();
+
+    // set active piece to given candidate and return true. If it does not fit,
+    // do not change active piece and return false.
+    bool setActivePieceIfFits(const Piece& candidate);
+
     const GameBox gameBox;
+    CementedBlockArray blockArray;
     Piece activePiece;
-    //Piece activePiece;
-    //std::unordered_map<Pos3d, Block> cementedBlocks;
 
     int score;
+    bool alive;
 };
 
 #endif
