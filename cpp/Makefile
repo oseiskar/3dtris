@@ -1,6 +1,6 @@
 CFLAGS=-Wall -Werror -pedantic -Iinclude
 
-_OBJ = game.o piece.o
+_OBJ = game.o piece.o cemented-block-array.o game-box.o
 OBJ = $(patsubst %,obj/%,$(_OBJ))
 
 bin/main: $(OBJ)
