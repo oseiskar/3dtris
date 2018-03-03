@@ -1,16 +1,28 @@
 #include "game.hpp"
+#include <cmath>
 
-std::unique_ptr<Game> buildGame() {
-    return std::unique_ptr<Game>(new ConcreteGame());
+std::unique_ptr<Game> buildGame(int randomSeed) {
+    return std::unique_ptr<Game>(new ConcreteGame(randomSeed));
 }
 
-ConcreteGame::ConcreteGame()
+namespace game_config {
+    static const Pos3d DIMENSIONS { 5, 6, 15 };
+    static const int DROP_SCORE_MULTIPLIER = 1;
+    static const int REMOVAL_SCORE_MULTIPLIER = 20;
+    static const int INITIAL_DROP_INTERVAL_MS = 1000;
+    static const double DROP_INTERVAL_HALF_LIFE_N_PIECES = 50;
+}
+
+ConcreteGame::ConcreteGame(int randomSeed)
 :
-    gameBox(Pos3d { 5, 6, 15 }),
+    gameBox(game_config::DIMENSIONS),
     blockArray(gameBox),
-    activePiece {{}}, // empty piece
+    pieceGenerator(gameBox, randomSeed),
+    activePiece(pieceGenerator.nextPiece()),
     score(0),
-    alive(true)
+    alive(true),
+    timeToNextDownMs(game_config::INITIAL_DROP_INTERVAL_MS),
+    nDroppedPieces(0)
 {}
 
 std::vector<Block> ConcreteGame::getActiveBlocks() const {
@@ -30,8 +42,21 @@ int ConcreteGame::getScore() const {
 }
 
 // timed events
-void ConcreteGame::tick(int dt) {
-    abort();
+bool ConcreteGame::tick(int dtMs) {
+
+    timeToNextDownMs -= dtMs;
+    if (timeToNextDownMs <= 0) {
+        moveDown();
+
+        // compute next down
+        timeToNextDownMs = ceil(
+            game_config::INITIAL_DROP_INTERVAL_MS *
+            pow(2, -nDroppedPieces /
+                game_config::DROP_INTERVAL_HALF_LIFE_N_PIECES));
+
+        return true;
+    }
+    return false;
 }
 
 // controls
@@ -46,15 +71,34 @@ bool ConcreteGame::rotate(Rotation rot) {
 }
 
 void ConcreteGame::drop() {
-    // TODO: score
-    while (moveDown());
+    int height = 0;
+    while (moveDown()) height++;
+    score += game_config::DROP_SCORE_MULTIPLIER * height;
 }
 
 // private helpers
 bool ConcreteGame::moveDown() {
     if (!setActivePieceIfFits(activePiece.translated(Pos3d {0,0,-1}))) {
         blockArray.cementPiece(activePiece);
-        // TODO: new piece
+        nDroppedPieces++;
+
+        // remove empty layers
+        int nRemoved = 0;
+        for (int z = gameBox.dims.z - 1; z >= 0; --z) {
+            if (blockArray.isLayerFull(z)) {
+                blockArray.removeLayer(z);
+                nRemoved++;
+            }
+        }
+        // (2^nRemoved - 1)*C
+        // 0 -> 0, 1 -> C, 2 -> 3C, 3 -> 7C, ...
+        score += ((1 << nRemoved) - 1) * game_config::REMOVAL_SCORE_MULTIPLIER;
+
+        // new piece, check if fits
+        activePiece = pieceGenerator.nextPiece();
+        if (!blockArray.pieceFits(activePiece)) {
+            alive = false;
+        }
         return false;
     }
     return true;

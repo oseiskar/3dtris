@@ -4,11 +4,12 @@
 #include "piece.hpp"
 #include "game-box.hpp"
 #include "cemented-block-array.hpp"
+#include "piece-generator.hpp"
 #include <bitset>
 
 class ConcreteGame : public Game {
 public:
-    ConcreteGame();
+    ConcreteGame(int randomSeed);
 
     std::vector<Block> getActiveBlocks() const override;
     std::vector<Block> getCementedBlocks() const override;
@@ -17,7 +18,7 @@ public:
     int getScore() const override;
 
     // timed events
-    void tick(int dt) override;
+    bool tick(int dtMilliseconds) override;
 
     // controls
     bool moveXY(int dx, int dy) override;
@@ -35,10 +36,14 @@ private:
 
     const GameBox gameBox;
     CementedBlockArray blockArray;
+    PieceGenerator pieceGenerator;
     Piece activePiece;
 
     int score;
     bool alive;
+
+    int timeToNextDownMs;
+    int nDroppedPieces;
 };
 
 #endif

@@ -230,3 +230,76 @@ TEST_CASE( "CementedBlockArray" "[cemented-block-array]") {
         REQUIRE( ne[2].material == 2 );
     }
 }
+
+TEST_CASE( "ConcreteGame" "[concrete-game]") {
+
+    SECTION("start") {
+        std::unique_ptr<Game> game = buildGame(0);
+        REQUIRE( !game->isOver() );
+        REQUIRE( game->getScore() == 0 );
+        REQUIRE( game->getActiveBlocks().size() > 0 );
+    }
+
+    SECTION("should end in 2-100 drops") {
+        std::unique_ptr<Game> game = buildGame(0);
+
+        game->drop();
+        REQUIRE( !game->isOver() );
+
+        for (int i = 0; i < 100; ++i) {
+            game->drop();
+            if (game->isOver()) break;
+        }
+        REQUIRE( game->getScore() > 0 );
+        REQUIRE( game->isOver() );
+    }
+
+    SECTION("should end in 10 minutes with no inputs") {
+        std::unique_ptr<Game> game = buildGame(0);
+        REQUIRE( !game->isOver() );
+
+        const int TEN_MINUTES_MS = 10*60*1000;
+        const int FRAME_MS = 10;
+        const int N_FRAMES = TEN_MINUTES_MS / FRAME_MS;
+
+        // nothing should happen on the first frame
+        REQUIRE( !game->tick(FRAME_MS) );
+
+        int nEvents = 0;
+        for (int i = 0; i < N_FRAMES; ++i) {
+            if (game->tick(FRAME_MS)) nEvents++;
+            if (game->isOver()) break;
+        }
+
+        REQUIRE( nEvents > 10 ); // there should be many events
+        REQUIRE( game->isOver() );
+    }
+
+    SECTION("move XY") {
+        std::unique_ptr<Game> game = buildGame(0);
+
+        bool moved = false;
+        for (int dir : {-1,1}) {
+            for (int i=0; i<5; ++i) {
+                if (game->moveXY(dir,0)) moved = true;
+                if (game->moveXY(0,dir)) moved = true;
+            }
+        }
+        REQUIRE( moved );
+        REQUIRE( !game->isOver() );
+    }
+
+    SECTION("rotate") {
+        std::unique_ptr<Game> game = buildGame(0);
+
+        for (Rotation::Direction dir : {
+            Rotation::Direction::CW,
+            Rotation::Direction::CCW })
+        {
+            for (Axis axis : { Axis::X, Axis::Y, Axis::Z }) {
+                REQUIRE( game->rotate(Rotation{axis, dir}) );
+            }
+        }
+        REQUIRE( !game->isOver() );
+    }
+}

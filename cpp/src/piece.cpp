@@ -1,5 +1,8 @@
 #include "piece.hpp"
 #include <array>
+#include <algorithm>
+#include <iterator>
+#include <assert.h>
 
 namespace pos_methods {
 
@@ -76,9 +79,6 @@ namespace block_methods {
     }
 }
 
-#include <algorithm>
-#include <iterator>
-
 // snippet from http://blog.madhukaraphatak.com/functional-programming-in-c++/
 template <typename Collection,typename unop>
 Collection map(Collection col, unop op) {
@@ -101,7 +101,7 @@ Piece Piece::rotated(Rotation rot) const {
 }
 
 int Piece::getExtent(Axis axis, int direction) const {
-    if (direction != 1 && direction != -1) abort();
+    assert(direction == 1 || direction == -1);
 
     auto blocks = getBlocks();
 

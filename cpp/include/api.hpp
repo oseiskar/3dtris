@@ -31,7 +31,7 @@ public:
     virtual int getScore() const = 0;
 
     // timed events
-    virtual void tick(int dt) = 0;
+    virtual bool tick(int dtMilliseconds) = 0;
 
     // controls
     virtual bool moveXY(int dx, int dy) = 0;
@@ -41,6 +41,6 @@ public:
     virtual ~Game() = default;
 };
 
-std::unique_ptr<Game> buildGame();
+std::unique_ptr<Game> buildGame(int randomSeed);
 
 #endif

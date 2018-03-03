@@ -1,4 +1,5 @@
 #include "cemented-block-array.hpp"
+#include <assert.h>
 
 CementedBlockArray::CementedBlockArray(const GameBox& gameBox)
 :
@@ -16,12 +17,12 @@ void CementedBlockArray::clearBlock(Pos3d pos) {
 }
 
 int CementedBlockArray::getBlockMaterial(Pos3d pos) const {
-    if (!hasBlock(pos)) abort();
+    assert( hasBlock(pos) );
     return blockMaterials[posToIndex(pos)];
 }
 
 void CementedBlockArray::setBlock(const Block &block) {
-    if (!box.contains(block.pos)) abort();
+    assert( box.contains(block.pos) );
 
     int idx = posToIndex(block.pos);
     nonEmpty[idx] = true;
@@ -29,7 +30,7 @@ void CementedBlockArray::setBlock(const Block &block) {
 }
 
 bool CementedBlockArray::hasBlock(Pos3d pos) const {
-    if (!box.contains(pos)) abort();
+    assert( box.contains(pos) );
     return nonEmpty[posToIndex(pos)];
 }
 
@@ -76,6 +77,6 @@ bool CementedBlockArray::pieceFits(const Piece& piece) const {
 }
 
 void CementedBlockArray::cementPiece(const Piece& piece) {
-    if (!pieceFits(piece)) abort();
+    assert( pieceFits(piece) );
     for (Block b : piece.getBlocks()) setBlock(b);
 }
