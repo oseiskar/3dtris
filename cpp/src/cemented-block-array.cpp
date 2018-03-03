@@ -5,7 +5,7 @@ CementedBlockArray::CementedBlockArray(const GameBox& gameBox)
 :
     box(gameBox),
     nonEmpty(gameBox.size()),
-    blockMaterials(gameBox.size())
+    blockPieceIds(gameBox.size())
 {}
 
 int CementedBlockArray::posToIndex(Pos3d pos) const {
@@ -16,9 +16,9 @@ void CementedBlockArray::clearBlock(Pos3d pos) {
     nonEmpty[posToIndex(pos)] = false;
 }
 
-int CementedBlockArray::getBlockMaterial(Pos3d pos) const {
+int CementedBlockArray::getBlockPieceId(Pos3d pos) const {
     assert( hasBlock(pos) );
-    return blockMaterials[posToIndex(pos)];
+    return blockPieceIds[posToIndex(pos)];
 }
 
 void CementedBlockArray::setBlock(const Block &block) {
@@ -26,7 +26,7 @@ void CementedBlockArray::setBlock(const Block &block) {
 
     int idx = posToIndex(block.pos);
     nonEmpty[idx] = true;
-    blockMaterials[idx] = block.material;
+    blockPieceIds[idx] = block.pieceId;
 }
 
 bool CementedBlockArray::hasBlock(Pos3d pos) const {
@@ -49,7 +49,7 @@ void CementedBlockArray::removeLayer(int zToRemove) {
             for (int y = 0; y < box.dims.y; ++y) {
                 const Pos3d pos {x,y,z}, top {x,y,z+1};
                 if (z == box.dims.z-1 || !hasBlock(top)) clearBlock(pos);
-                else setBlock(Block{pos, getBlockMaterial(top)});
+                else setBlock(Block{pos, getBlockPieceId(top)});
             }
         }
     }
@@ -62,7 +62,7 @@ std::vector<Block> CementedBlockArray::getNonEmptyBlocks() const {
             for (int x = 0; x < box.dims.x; ++x) {
                 const Pos3d pos {x,y,z};
                 if (hasBlock(pos))
-                    blocks.push_back(Block{pos, getBlockMaterial(pos)});
+                    blocks.push_back(Block{pos, getBlockPieceId(pos)});
             }
         }
     }

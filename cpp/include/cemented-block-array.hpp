@@ -7,11 +7,11 @@ class CementedBlockArray {
 private:
     const GameBox& box;
     std::vector<bool> nonEmpty;
-    std::vector<int> blockMaterials;
+    std::vector<int> blockPieceIds;
 
     void clearBlock(Pos3d pos);
     int getBlock(Pos3d pos) const;
-    int getBlockMaterial(Pos3d pos) const;
+    int getBlockPieceId(Pos3d pos) const;
 
     int posToIndex(Pos3d pos) const;
 public:
@@ -19,7 +19,7 @@ public:
 
     bool pieceFits(const Piece& piece) const;
     void cementPiece(const Piece& piece);
-    
+
     bool isLayerFull(int z) const;
     void removeLayer(int z);
     std::vector<Block> getNonEmptyBlocks() const;

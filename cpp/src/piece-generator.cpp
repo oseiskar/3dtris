@@ -1,19 +1,18 @@
 #include "piece-generator.hpp"
 
 namespace piece_generator {
-    Piece prototypeToPiece( std::vector<Pos3d> pos, int material ) {
+    Piece prototypeToPiece( std::vector<Pos3d> pos, int pieceId ) {
         std::vector<Block> blocks;
-        for (Pos3d p : pos) blocks.push_back(Block {p, material});
+        for (Pos3d p : pos) blocks.push_back(Block {p, pieceId});
         return Piece(blocks);
     }
-
-    static const int NUMBER_OF_MATERIALS = 10;
 }
 
 PieceGenerator::PieceGenerator(const GameBox& gameBox_, int randomSeed)
 :
     random(randomSeed),
     gameBox(gameBox_),
+    pieceId(0),
     prototypes {
         {
             Pos3d { -1,0,0 }, //  ##
@@ -71,7 +70,7 @@ Piece PieceGenerator::nextPiece() {
     return randomTransformation(
         piece_generator::prototypeToPiece(
             prototypes[dist(random)],
-            nextMaterial())
+            pieceId++)
                 .translated(Pos3d{
                     gameBox.dims.x/2,
                     gameBox.dims.y/2,
@@ -88,11 +87,4 @@ Piece PieceGenerator::randomTransformation(const Piece& original) {
         }
     }
     return gameBox.translateToBounds(piece);
-}
-
-int PieceGenerator::nextMaterial() {
-    std::uniform_int_distribution<>
-        dist(0, piece_generator::NUMBER_OF_MATERIALS-1);
-
-    return dist(random);
 }

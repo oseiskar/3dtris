@@ -102,7 +102,7 @@ function gameRenderer(game) {
         blocks = blocks.concat(game.getActiveBlocks());
 
         const meshes = blocks.map(block => {
-            var material = blockMaterials[block.material % N_BLOCK_MATERIALS];
+            var material = blockMaterials[block.pieceId % N_BLOCK_MATERIALS];
             if (game.isOver() && false) {
                 material = materials.lost;
             }

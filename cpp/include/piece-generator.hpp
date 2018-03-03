@@ -10,9 +10,9 @@ class PieceGenerator {
 private:
     std::mt19937 random;
     const GameBox& gameBox;
+    int pieceId;
     std::vector< std::vector<Pos3d> > prototypes;
 
-    int nextMaterial();
     Piece randomTransformation(const Piece& original);
 public:
     PieceGenerator(const GameBox &gameBox, int randomSeed);

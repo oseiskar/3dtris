@@ -9,7 +9,7 @@ struct Pos3d {
 
 struct Block {
     Pos3d pos;
-    int material;
+    int pieceId;
 };
 
 enum class Axis {

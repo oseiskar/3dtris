@@ -22,7 +22,7 @@ EMSCRIPTEN_BINDINGS(game_types) {
 
     emscripten::value_object<Block>("Block")
         .field("pos", &Block::pos)
-        .field("material", &Block::material);
+        .field("pieceId", &Block::pieceId);
 
      emscripten::register_vector<Block>("BlockVector");
 }

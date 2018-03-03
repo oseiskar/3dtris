@@ -67,14 +67,14 @@ namespace block_methods {
     Block translate(const Block &target, Pos3d delta) {
         return Block {
             pos_methods::sum(target.pos, delta),
-            target.material
+            target.pieceId
         };
     }
 
     Block rotate(const Block &target, Rotation rot) {
         return Block {
             pos_methods::rotate(target.pos, rot),
-            target.material
+            target.pieceId
         };
     }
 }

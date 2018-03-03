@@ -18,7 +18,7 @@ TEST_CASE( "Block", "[block]" ) {
     SECTION("translate") {
         Block b { Pos3d {1, 2, 3}, 100 };
         Block r = block_methods::translate(b, Pos3d { 1, -3, 5 });
-        REQUIRE(r.material == 100);
+        REQUIRE(r.pieceId == 100);
         REQUIRE(r.pos.x == 2);
         REQUIRE(r.pos.y == -1);
         REQUIRE(r.pos.z == 8);
@@ -29,7 +29,7 @@ TEST_CASE( "Block", "[block]" ) {
         Block xccw = block_methods::rotate(b, Rotation {
             Axis::X, RotationDirection::CCW });
 
-        REQUIRE(xccw.material == 100);
+        REQUIRE(xccw.pieceId == 100);
         REQUIRE(xccw.pos.x == 1);
         REQUIRE(xccw.pos.y == -3);
         REQUIRE(xccw.pos.z == 2);
@@ -41,7 +41,7 @@ TEST_CASE( "Block", "[block]" ) {
         Block xcw = block_methods::rotate(b, Rotation {
             Axis::X, RotationDirection::CW });
 
-        REQUIRE(xcw.material == 100);
+        REQUIRE(xcw.pieceId == 100);
         REQUIRE(xcw.pos.x == 1);
         REQUIRE(xcw.pos.y == 3);
         REQUIRE(xcw.pos.z == -2);
@@ -68,11 +68,11 @@ TEST_CASE( "Piece", "[piece]" ) {
         REQUIRE(blocks[0].pos.x == 0);
         REQUIRE(blocks[0].pos.y == 2);
         REQUIRE(blocks[0].pos.z == 4);
-        REQUIRE(blocks[0].material == 100);
+        REQUIRE(blocks[0].pieceId == 100);
         REQUIRE(blocks[1].pos.x == 0);
         REQUIRE(blocks[1].pos.y == 2);
         REQUIRE(blocks[1].pos.z == 5);
-        REQUIRE(blocks[1].material == 101);
+        REQUIRE(blocks[1].pieceId == 101);
     }
 
     SECTION("translatedBeyond") {
@@ -158,7 +158,7 @@ TEST_CASE( "CementedBlockArray" "[cemented-block-array]") {
         REQUIRE( ne[0].pos.x == 0 );
         REQUIRE( ne[0].pos.y == 3 );
         REQUIRE( ne[0].pos.z == 2 );
-        REQUIRE( ne[0].material == 100 );
+        REQUIRE( ne[0].pieceId == 100 );
     }
 
     SECTION("layers, not top") {
@@ -225,9 +225,9 @@ TEST_CASE( "CementedBlockArray" "[cemented-block-array]") {
 
         auto ne = blocks.getNonEmptyBlocks();
         REQUIRE( ne.size() == 3 );
-        REQUIRE( ne[0].material == 10 );
-        REQUIRE( ne[1].material == 1 );
-        REQUIRE( ne[2].material == 2 );
+        REQUIRE( ne[0].pieceId == 10 );
+        REQUIRE( ne[1].pieceId == 1 );
+        REQUIRE( ne[2].pieceId == 2 );
     }
 }
 
