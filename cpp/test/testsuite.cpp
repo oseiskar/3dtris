@@ -27,7 +27,7 @@ TEST_CASE( "Block", "[block]" ) {
     SECTION("rotate") {
         Block b { Pos3d {1, 2, 3}, 100 };
         Block xccw = block_methods::rotate(b, Rotation {
-            Axis::X, Rotation::Direction::CCW });
+            Axis::X, RotationDirection::CCW });
 
         REQUIRE(xccw.material == 100);
         REQUIRE(xccw.pos.x == 1);
@@ -39,7 +39,7 @@ TEST_CASE( "Block", "[block]" ) {
         REQUIRE(b.pos.z == 3);
 
         Block xcw = block_methods::rotate(b, Rotation {
-            Axis::X, Rotation::Direction::CW });
+            Axis::X, RotationDirection::CW });
 
         REQUIRE(xcw.material == 100);
         REQUIRE(xcw.pos.x == 1);
@@ -62,7 +62,7 @@ TEST_CASE( "Piece", "[piece]" ) {
 
         Piece r = p
             .translated(Pos3d{-1,0,1})
-            .rotated(Rotation{Axis::X, Rotation::Direction::CCW});
+            .rotated(Rotation{Axis::X, RotationDirection::CCW});
 
         auto blocks = r.getBlocks();
         REQUIRE(blocks[0].pos.x == 0);
@@ -292,12 +292,12 @@ TEST_CASE( "ConcreteGame" "[concrete-game]") {
     SECTION("rotate") {
         std::unique_ptr<Game> game = buildGame(0);
 
-        for (Rotation::Direction dir : {
-            Rotation::Direction::CW,
-            Rotation::Direction::CCW })
+        for (RotationDirection dir : {
+            RotationDirection::CW,
+            RotationDirection::CCW })
         {
             for (Axis axis : { Axis::X, Axis::Y, Axis::Z }) {
-                REQUIRE( game->rotate(Rotation{axis, dir}) );
+                REQUIRE( game->rotate(axis, dir) );
             }
         }
         REQUIRE( !game->isOver() );

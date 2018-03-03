@@ -11,7 +11,7 @@ namespace pos_methods {
     }
 
     std::array<int, 3> toArray(const Pos3d& pos) {
-        return { pos.x, pos.y, pos.z };
+        return {{ pos.x, pos.y, pos.z }};
     }
 
     Pos3d rotate(Pos3d pos, Rotation rot) {
@@ -21,7 +21,7 @@ namespace pos_methods {
         // one of these
 
         // which two axes are swapped by this rotation (order is important)
-        int exAx0, exAx1;
+        Axis exAx0, exAx1;
         switch (rot.axis) {
         case Axis::X:
             exAx0 = Axis::Y;
@@ -38,27 +38,27 @@ namespace pos_methods {
         }
 
         // determines on which axis the sign is flipped
-        const int sign = rot.direction == Rotation::Direction::CCW ? 1 : -1;
+        const int sign = rot.direction == RotationDirection::CCW ? 1 : -1;
 
         // before & after
         auto p0 = toArray(pos);
         decltype(p0) p1 = p0;
 
         // swap & sign flip
-        p1[exAx0] = -sign*p0[exAx1];
-        p1[exAx1] = sign*p0[exAx0];
+        p1[static_cast<int>(exAx0)] = -sign*p0[static_cast<int>(exAx1)];
+        p1[static_cast<int>(exAx1)] = sign*p0[static_cast<int>(exAx0)];
 
         return fromArray(p1);
     }
 
     Pos3d setElement(const Pos3d &pos, Axis ax, int value) {
         auto a = toArray(pos);
-        a[ax] = value;
+        a[static_cast<int>(ax)] = value;
         return fromArray(a);
     }
 
     int getElement(const Pos3d &pos, Axis ax) {
-        return toArray(pos)[ax];
+        return toArray(pos)[static_cast<int>(ax)];
     }
 }
 

@@ -41,15 +41,15 @@ function randomMaterial() {
     });
 }
 
-function planeGeometry(sz) {
+function planeGeometry(w, h) {
     var geometry = new THREE.Geometry();
 
-    const x1 = -sz;
-    const y1 = -sz;
+    const x1 = -w/2;
+    const y1 = -h/2;
     const z = 0;
 
-    const x2 = sz;
-    const y2 = sz;
+    const x2 = w/2;
+    const y2 = h/2;
 
     geometry.vertices.push(
         new THREE.Vector3(x1,y1,z),//vertex0
@@ -69,9 +69,10 @@ function planeGeometry(sz) {
 
 function gameRenderer(game) {
 
-    const w = game.dims.x;
-    const h = game.dims.y;
-    const d = game.dims.z;
+    const dims = game.getDimensions();
+    const w = dims.x;
+    const h = dims.y;
+    const d = dims.z;
 
     const boxSz = 1.0 / Math.max(w, h);
 
@@ -79,7 +80,7 @@ function gameRenderer(game) {
 
     const geometries = {
         box: new THREE.BoxBufferGeometry( boxSz, boxSz, boxSz ),
-        plane: planeGeometry(0.5),
+        plane: planeGeometry(w*boxSz, h*boxSz),
         circle: new THREE.CircleGeometry( 3.0, 100 )
     };
 
@@ -89,25 +90,29 @@ function gameRenderer(game) {
         lost: new THREE.MeshBasicMaterial({ color: 0xcccccc })
     };
 
+    const blockMaterials = Array.from(
+        new Array(N_BLOCK_MATERIALS),
+        () => randomMaterial());
+
     return function() {
 
-        $("#score").text(game.score);
+        $("#score").text(game.getScore());
 
         let blocks = game.getCementedBlocks();
         blocks = blocks.concat(game.getActiveBlocks());
 
         const meshes = blocks.map(block => {
-            var material = block.material;
+            var material = blockMaterials[block.material % N_BLOCK_MATERIALS];
             if (game.isOver() && false) {
                 material = materials.lost;
             }
             const mesh = new THREE.Mesh( geometries.box, material );
 
-            mesh.translateX((block.x - w*0.5 + 0.5)*boxSz);
+            mesh.translateX((block.pos.x - w*0.5 + 0.5)*boxSz);
 
             // flip Z and Y
-            mesh.translateZ((block.y - h*0.5 + 0.5)*boxSz);
-            mesh.translateY((block.z+0.5)*boxSz - centerZ);
+            mesh.translateZ((block.pos.y - h*0.5 + 0.5)*boxSz);
+            mesh.translateY((block.pos.z+0.5)*boxSz - centerZ);
 
             return mesh;
         });
@@ -277,12 +282,7 @@ function init(loadedShaders) {
     flatScene = new THREE.Scene();
     flatScene.add( flatQuad );
 
-    const blockMaterials = Array.from(new Array(N_BLOCK_MATERIALS), () => randomMaterial());
-    function pieceDecorator() {
-        return blockMaterials[Math.floor(Math.random()*blockMaterials.length)];
-    }
-
-    const gameController = new GameController(pieceDecorator);
+    const gameController = new GameController();
     game = gameController.game;
 
     const gameRenderFunc = gameRenderer(game);
@@ -297,11 +297,7 @@ function init(loadedShaders) {
             prevMeshes.push(mesh);
             scene.add(mesh);
         });
-    }
 
-    function keyControls(e)  {
-        const action = executeAction(game.controls, e.key);
-        if (action !== null) generateMeshes();
         if (game.isOver()) {
             $('#game-over').show();
         }
@@ -318,7 +314,7 @@ function init(loadedShaders) {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
-    document.body.addEventListener("keydown", keyControls);
+    document.body.addEventListener("keydown", e => gameController.onKeyDown(e));
 
     container.appendChild( renderer.domElement );
 

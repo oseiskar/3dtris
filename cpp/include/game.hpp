@@ -8,22 +8,25 @@
 #include <bitset>
 
 class ConcreteGame : public Game {
+private:
+    bool rotate(Rotation);
 public:
-    ConcreteGame(int randomSeed);
+    ConcreteGame(unsigned int randomSeed);
 
     std::vector<Block> getActiveBlocks() const override;
     std::vector<Block> getCementedBlocks() const override;
 
     bool isOver() const override;
     int getScore() const override;
+    Pos3d getDimensions() const override;
 
     // timed events
     bool tick(int dtMilliseconds) override;
 
     // controls
     bool moveXY(int dx, int dy) override;
-    bool rotate(Rotation) override;
     void drop() override;
+    bool rotate(Axis axis, RotationDirection dir) override;
 
     virtual ~ConcreteGame() = default;
 

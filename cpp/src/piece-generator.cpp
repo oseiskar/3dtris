@@ -71,7 +71,12 @@ Piece PieceGenerator::nextPiece() {
     return randomTransformation(
         piece_generator::prototypeToPiece(
             prototypes[dist(random)],
-            nextMaterial()));
+            nextMaterial())
+                .translated(Pos3d{
+                    gameBox.dims.x/2,
+                    gameBox.dims.y/2,
+                    gameBox.dims.z + 5
+                }));
 }
 
 Piece PieceGenerator::randomTransformation(const Piece& original) {
@@ -79,10 +84,9 @@ Piece PieceGenerator::randomTransformation(const Piece& original) {
     std::uniform_int_distribution<> lessThanFour(0, 4);
     for (Axis axis : { Axis::X, Axis::Y, Axis::Z} ) {
         for (int i = 0; i < lessThanFour(random); ++i) {
-            piece = piece.rotated(Rotation{axis, Rotation::Direction::CCW});
+            piece = piece.rotated(Rotation{axis, RotationDirection::CCW});
         }
     }
-    piece = piece.translated(Pos3d { 0, 0, gameBox.dims.z });
     return gameBox.translateToBounds(piece);
 }
 

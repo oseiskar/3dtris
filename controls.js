@@ -3,22 +3,22 @@ function executeAction(controls, key) {
     switch (key) {
 
         case "q":
-            return controls.rotate('y', -1);
+            return controls.rotate('y', 'cw');
 
         case "e":
-            return controls.rotate('y', 1);
+            return controls.rotate('y', 'ccw');
 
         case "2":
-            return controls.rotate('x', 1);
+            return controls.rotate('x', 'ccw');
 
         case "x":
-            return controls.rotate('x', -1);
+            return controls.rotate('x', 'cw');
 
         case "r":
-            return controls.rotate('z', -1);
+            return controls.rotate('z', 'cw');
 
         case "t":
-            return controls.rotate('z', 1);
+            return controls.rotate('z', 'ccw');
 
         case "ArrowLeft":
         case "a":
@@ -38,7 +38,8 @@ function executeAction(controls, key) {
 
         case " ":
             $("#help-text").hide(1000);
-            return controls.drop();
+            controls.drop();
+            return true;
     }
     return null;
 }

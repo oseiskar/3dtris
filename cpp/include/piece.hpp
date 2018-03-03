@@ -4,6 +4,11 @@
 #include "api.hpp"
 #include <vector>
 
+struct Rotation {
+    Axis axis;
+    RotationDirection direction;
+};
+
 struct Piece {
 private:
     Pos3d center;

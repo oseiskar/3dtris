@@ -12,15 +12,12 @@ struct Block {
     int material;
 };
 
-enum Axis {
+enum class Axis {
     X, Y, Z
 };
 
-struct Rotation {
-    enum Direction { CW, CCW };
-
-    Axis axis;
-    Direction direction;
+enum class RotationDirection {
+    CW, CCW
 };
 
 class Game {
@@ -29,18 +26,20 @@ public:
     virtual std::vector<Block> getCementedBlocks() const = 0;
     virtual bool isOver() const = 0;
     virtual int getScore() const = 0;
+    virtual Pos3d getDimensions() const = 0;
 
     // timed events
     virtual bool tick(int dtMilliseconds) = 0;
 
     // controls
     virtual bool moveXY(int dx, int dy) = 0;
-    virtual bool rotate(Rotation) = 0;
     virtual void drop() = 0;
+
+    virtual bool rotate(Axis axis, RotationDirection dir) = 0;
 
     virtual ~Game() = default;
 };
 
-std::unique_ptr<Game> buildGame(int randomSeed);
+std::unique_ptr<Game> buildGame(unsigned int randomSeed);
 
 #endif
