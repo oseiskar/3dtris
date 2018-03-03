@@ -13,6 +13,10 @@ The browser version can be built like this
  1. `python -m SimpleHTTPServer`
  1. Go to http://localhost:8000/ (and http://localhost:8000/test/)
 
+There is also an old [JavaScript-only version](https://github.com/oseiskar/3dtris/releases/tag/js-only),
+hosted in https://oseiskar.github.io/3dtris/ which works without this complicated
+build process.
+
 ## Copyright & License info
 
 See `COPYRIGHT.md` for the licences of the included JS libraries.
