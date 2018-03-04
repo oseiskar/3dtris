@@ -31,8 +31,6 @@
 #include "arcore_c_api.h"
 #include "background_renderer.h"
 #include "glm.h"
-#include "obj_renderer.h"
-#include "plane_renderer.h"
 #include "game_box_renderer.h"
 #include "game_renderer.h"
 #include "util.h"
@@ -92,9 +90,6 @@ private:
   // The anchors at which we are drawing android models
   std::vector<ArAnchor*> tracked_obj_set_;
 
-  // Stores the randomly-selected color each plane is drawn with
-  std::unordered_map<ArPlane*, glm::vec3> plane_color_map_;
-
   // The first plane is always rendered in white, if this is true then a plane
   // at some point has been found.
   bool first_plane_has_been_found_ = false;
@@ -102,7 +97,6 @@ private:
   GameController game_controller_;
 
   BackgroundRenderer background_renderer_;
-  PlaneRenderer plane_renderer_;
   GameBoxRenderer game_box_renderer_;
   GameRenderer game_renderer_;
 

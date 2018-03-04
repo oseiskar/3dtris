@@ -90,7 +90,7 @@ void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
   }
 
   glUseProgram(shader_program_);
-  glDepthMask(GL_FALSE);
+  //glDepthMask(GL_FALSE);
   glLineWidth(5.0);
 
   glm::mat4 scale_mat = glm::mat4(scale);
@@ -120,7 +120,7 @@ void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
   //glDisableVertexAttribArray(attri_normals_);
 
   glUseProgram(0);
-  glDepthMask(GL_TRUE);
+  //glDepthMask(GL_TRUE);
   util::CheckGlError("GameBoxRenderer::Draw()");
 }
 }  // namespace hello_ar

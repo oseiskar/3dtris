@@ -30,8 +30,6 @@ add_library(hello_ar_native SHARED
            src/main/cpp/background_renderer.cc
            src/main/cpp/hello_ar_application.cc
            src/main/cpp/jni_interface.cc
-           src/main/cpp/obj_renderer.cc
-           src/main/cpp/plane_renderer.cc
            src/main/cpp/game_renderer.cc
            src/main/cpp/game_box_renderer.cc
            src/main/cpp/util.cc
