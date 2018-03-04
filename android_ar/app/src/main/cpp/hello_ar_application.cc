@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 
 #include "hello_ar_application.h"
@@ -43,19 +45,104 @@ inline glm::vec3 GetRandomPlaneColor() {
                    ((colorRgba >> 8) & 0xff) / 255.0f);
 }
 
-inline static unsigned int getRandomSeedFromTime() {
-  // use the current time modulo something as the random seed
-  // ... for the game, this is not crypto stuff!
-  struct timespec res;
-  clock_gettime(CLOCK_REALTIME, &res);
-  return static_cast<unsigned int>(res.tv_nsec ^ res.tv_sec);
+template <class F>
+void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool polygonTest, F f) {
+
+  if (ar_frame_ != nullptr && ar_session_ != nullptr) {
+    ArHitResultList* hit_result_list = nullptr;
+    ArHitResultList_create(ar_session_, &hit_result_list);
+    CHECK(hit_result_list);
+    ArFrame_hitTest(ar_session_, ar_frame_, x, y, hit_result_list);
+
+    int32_t hit_result_list_size = 0;
+    ArHitResultList_getSize(ar_session_, hit_result_list,
+        &hit_result_list_size);
+
+    // The hitTest method sorts the resulting list by distance from the camera,
+    // increasing.  The first hit result will usually be the most relevant when
+    // responding to user input.
+
+    ArHitResult* ar_hit_result = nullptr;
+    for (int32_t i = 0; i < hit_result_list_size; ++i) {
+      ArHitResult* ar_hit = nullptr;
+      ArHitResult_create(ar_session_, &ar_hit);
+      ArHitResultList_getItem(ar_session_, hit_result_list, i, ar_hit);
+
+      if (ar_hit == nullptr) {
+        LOGE("HelloArApplication::OnTouched ArHitResultList_getItem error");
+        return;
+      }
+
+      ArTrackable* ar_trackable = nullptr;
+      ArHitResult_acquireTrackable(ar_session_, ar_hit, &ar_trackable);
+      ArTrackableType ar_trackable_type = AR_TRACKABLE_NOT_VALID;
+      ArTrackable_getType(ar_session_, ar_trackable, &ar_trackable_type);
+      // Creates an anchor if a plane or an oriented point was hit.
+      if (AR_TRACKABLE_PLANE == ar_trackable_type) {
+        ArPose* ar_pose = nullptr;
+        ArPose_create(ar_session_, nullptr, &ar_pose);
+        ArHitResult_getHitPose(ar_session_, ar_hit, ar_pose);
+        int32_t in_polygon = 0;
+        ArPlane* ar_plane = ArAsPlane(ar_trackable);
+        ArPlane_isPoseInPolygon(ar_session_, ar_plane, ar_pose, &in_polygon);
+        ArPose_destroy(ar_pose);
+        if (!in_polygon && polygonTest) {
+          continue;
+        }
+
+        ar_hit_result = ar_hit;
+        break;
+      } else if (AR_TRACKABLE_POINT == ar_trackable_type) {
+        ArPoint* ar_point = ArAsPoint(ar_trackable);
+        ArPointOrientationMode mode;
+        ArPoint_getOrientationMode(ar_session_, ar_point, &mode);
+        if (AR_POINT_ORIENTATION_ESTIMATED_SURFACE_NORMAL == mode) {
+          ar_hit_result = ar_hit;
+          break;
+        }
+      }
+    }
+
+    if (ar_hit_result) {
+      // Note that the application is responsible for releasing the anchor
+      // pointer after using it. Call ArAnchor_release(anchor) to release.
+      ArAnchor* anchor = nullptr;
+      if (ArHitResult_acquireNewAnchor(ar_session_, ar_hit_result, &anchor) !=
+          AR_SUCCESS) {
+        LOGE(
+            "HelloArApplication::OnTouched ArHitResult_acquireNewAnchor error");
+        return;
+      }
+
+      ArTrackingState tracking_state = AR_TRACKING_STATE_STOPPED;
+      ArAnchor_getTrackingState(ar_session_, anchor, &tracking_state);
+      if (tracking_state != AR_TRACKING_STATE_TRACKING) {
+        ArAnchor_release(anchor);
+        return;
+      }
+
+      if (!f(anchor)) {
+        ArAnchor_release(anchor);
+      }
+
+      ArHitResult_destroy(ar_hit_result);
+      ar_hit_result = nullptr;
+
+      ArHitResultList_destroy(hit_result_list);
+      hit_result_list = nullptr;
+    }
+  }
 }
+
 }  // namespace
 
 HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
     : asset_manager_(asset_manager),
-      game(buildGame(getRandomSeedFromTime())),
-      game_box_renderer_(game->getDimensions()) {
+      game_controller_(),
+      game_box_renderer_(game_controller_.getGame().getDimensions()),
+      game_model_mat_(1.0f),
+      game_scale_(1.0f)
+{
   LOGI("OnCreate()");
 }
 
@@ -131,7 +218,7 @@ void HelloArApplication::OnSurfaceCreated() {
   LOGI("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
-  andy_renderer_.InitializeGlContent(asset_manager_, "cube.obj");
+  //andy_renderer_.InitializeGlContent(asset_manager_, "cube.obj");
   game_box_renderer_.InitializeGlContent(asset_manager_);
   plane_renderer_.InitializeGlContent(asset_manager_);
 }
@@ -158,7 +245,10 @@ void HelloArApplication::OnDrawFrame() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  if (ar_session_ == nullptr) return;
+  if (ar_session_ == nullptr) {
+    game_controller_.onTrackingState(false);
+    return;
+  }
 
   ArSession_setCameraTextureName(ar_session_,
                                  background_renderer_.GetTextureId());
@@ -186,6 +276,7 @@ void HelloArApplication::OnDrawFrame() {
 
   // If the camera isn't tracking don't bother rendering other objects.
   if (camera_tracking_state != AR_TRACKING_STATE_TRACKING) {
+    game_controller_.onTrackingState(false);
     return;
   }
 
@@ -208,168 +299,129 @@ void HelloArApplication::OnDrawFrame() {
   ArLightEstimate_destroy(ar_light_estimate);
   ar_light_estimate = nullptr;
 
-  // Render Andy objects.
-  glm::mat4 model_mat(1.0f);
   for (const auto& obj_iter : tracked_obj_set_) {
     ArTrackingState tracking_state = AR_TRACKING_STATE_STOPPED;
     ArAnchor_getTrackingState(ar_session_, obj_iter, &tracking_state);
     if (tracking_state == AR_TRACKING_STATE_TRACKING) {
-      // Render object only if the tracking state is AR_TRACKING_STATE_TRACKING.
-      util::GetTransformMatrixFromAnchor(ar_session_, obj_iter, &model_mat);
-      //andy_renderer_.Draw(projection_mat, view_mat, model_mat, light_intensity);
-      game_box_renderer_.Draw(projection_mat, view_mat, model_mat);
+      util::GetTransformMatrixFromAnchor(ar_session_, obj_iter, &game_model_mat_);
     }
   }
 
-  // Update and render planes.
-  ArTrackableList* plane_list = nullptr;
-  ArTrackableList_create(ar_session_, &plane_list);
-  CHECK(plane_list != nullptr);
+  if (game_controller_.getState() == GameController::State::RUNNING ||
+      game_controller_.getState() == GameController::State::PAUSED_TRACKING_LOST) {
+    game_controller_.onTrackingState(true);
+    game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_);
+  }
 
-  ArTrackableType plane_tracked_type = AR_TRACKABLE_PLANE;
-  ArSession_getAllTrackables(ar_session_, plane_tracked_type, plane_list);
+  if (game_controller_.getState() == GameController::State::WAITING_FOR_PLANE ||
+      game_controller_.getState() == GameController::State::WAITING_FOR_BOX) {
 
-  int32_t plane_list_size = 0;
-  ArTrackableList_getSize(ar_session_, plane_list, &plane_list_size);
-  plane_count_ = plane_list_size;
+    // Update and render planes.
+    ArTrackableList* plane_list = nullptr;
+    ArTrackableList_create(ar_session_, &plane_list);
+    CHECK(plane_list != nullptr);
 
-  for (int i = 0; i < plane_list_size; ++i) {
-    ArTrackable* ar_trackable = nullptr;
-    ArTrackableList_acquireItem(ar_session_, plane_list, i, &ar_trackable);
-    ArPlane* ar_plane = ArAsPlane(ar_trackable);
-    ArTrackingState out_tracking_state;
-    ArTrackable_getTrackingState(ar_session_, ar_trackable,
-                                 &out_tracking_state);
+    ArTrackableType plane_tracked_type = AR_TRACKABLE_PLANE;
+    ArSession_getAllTrackables(ar_session_, plane_tracked_type, plane_list);
 
-    ArPlane* subsume_plane;
-    ArPlane_acquireSubsumedBy(ar_session_, ar_plane, &subsume_plane);
-    if (subsume_plane != nullptr) {
-      ArTrackable_release(ArAsTrackable(subsume_plane));
-      continue;
-    }
+    int32_t plane_list_size = 0;
+    ArTrackableList_getSize(ar_session_, plane_list, &plane_list_size);
+    plane_count_ = plane_list_size;
 
-    if (ArTrackingState::AR_TRACKING_STATE_TRACKING != out_tracking_state) {
-      continue;
-    }
+    bool tracking_any_planes = false;
 
-    ArTrackingState plane_tracking_state;
-    ArTrackable_getTrackingState(ar_session_, ArAsTrackable(ar_plane),
-                                 &plane_tracking_state);
-    if (plane_tracking_state == AR_TRACKING_STATE_TRACKING) {
-      const auto iter = plane_color_map_.find(ar_plane);
-      glm::vec3 color;
-      if (iter != plane_color_map_.end()) {
-        color = iter->second;
+    for (int i = 0; i < plane_list_size; ++i) {
+      ArTrackable* ar_trackable = nullptr;
+      ArTrackableList_acquireItem(ar_session_, plane_list, i, &ar_trackable);
+      ArPlane* ar_plane = ArAsPlane(ar_trackable);
+      ArTrackingState out_tracking_state;
+      ArTrackable_getTrackingState(ar_session_, ar_trackable,
+          &out_tracking_state);
 
-        // If this is an already observed trackable release it so it doesn't
-        // leave an additional reference dangling.
-        ArTrackable_release(ar_trackable);
-      } else {
-        // The first plane is always white.
-        if (!first_plane_has_been_found_) {
-          first_plane_has_been_found_ = true;
-          color = kWhite;
-        } else {
-          color = GetRandomPlaneColor();
-        }
-        plane_color_map_.insert({ar_plane, color});
+      ArPlane* subsume_plane;
+      ArPlane_acquireSubsumedBy(ar_session_, ar_plane, &subsume_plane);
+      if (subsume_plane != nullptr) {
+        ArTrackable_release(ArAsTrackable(subsume_plane));
+        continue;
       }
 
-      plane_renderer_.Draw(projection_mat, view_mat, ar_session_, ar_plane,
-                           color);
+      if (ArTrackingState::AR_TRACKING_STATE_TRACKING != out_tracking_state) {
+        continue;
+      }
+
+      ArTrackingState plane_tracking_state;
+      ArTrackable_getTrackingState(ar_session_, ArAsTrackable(ar_plane),
+          &plane_tracking_state);
+      if (plane_tracking_state == AR_TRACKING_STATE_TRACKING) {
+        const auto iter = plane_color_map_.find(ar_plane);
+        glm::vec3 color;
+        if (iter != plane_color_map_.end()) {
+          color = iter->second;
+
+          // If this is an already observed trackable release it so it doesn't
+          // leave an additional reference dangling.
+          ArTrackable_release(ar_trackable);
+        } else {
+          // The first plane is always white.
+          if (!first_plane_has_been_found_) {
+            first_plane_has_been_found_ = true;
+            color = kWhite;
+          } else {
+            color = GetRandomPlaneColor();
+          }
+          plane_color_map_.insert({ar_plane, color});
+        }
+
+        tracking_any_planes = true;
+        plane_renderer_.Draw(projection_mat, view_mat, ar_session_, ar_plane,
+            color);
+      }
     }
+
+    ArTrackableList_destroy(plane_list);
+    plane_list = nullptr;
+
+    game_controller_.onTrackingState(tracking_any_planes);
   }
 
-  ArTrackableList_destroy(plane_list);
-  plane_list = nullptr;
+  if (game_controller_.getState() == GameController::State::WAITING_FOR_BOX) {
+    ArSession* session = ar_session_;
+    GameBoxRenderer& renderer = game_box_renderer_;
+    glm::mat4x4& model_mat = game_model_mat_;
+    float& scale = game_scale_;
+
+    getHit(ar_session_, ar_frame_, 0.5f*width_, 0.5f*height_, false,
+        [session, &renderer, projection_mat, view_mat, &model_mat, &scale](ArAnchor *anchor) {
+          model_mat = glm::mat4(1.0f);
+          util::GetTransformMatrixFromAnchor(session, anchor, &model_mat);
+
+          const glm::vec3 delta = util::GetTranslation(view_mat * model_mat);
+          const float dist = sqrt(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z);
+          scale = 0.05f * dist;
+
+          renderer.Draw(projection_mat, view_mat, model_mat, scale);
+          return false;
+        });
+  }
 }
 
 void HelloArApplication::OnTouched(float x, float y) {
-  if (ar_frame_ != nullptr && ar_session_ != nullptr) {
-    ArHitResultList* hit_result_list = nullptr;
-    ArHitResultList_create(ar_session_, &hit_result_list);
-    CHECK(hit_result_list);
-    ArFrame_hitTest(ar_session_, ar_frame_, x, y, hit_result_list);
+  std::vector<ArAnchor*>& anchors = tracked_obj_set_;
+  GameController& controller = game_controller_;
 
-    int32_t hit_result_list_size = 0;
-    ArHitResultList_getSize(ar_session_, hit_result_list,
-                            &hit_result_list_size);
+  if (game_controller_.getState() == GameController::State::WAITING_FOR_BOX) {
 
-    // The hitTest method sorts the resulting list by distance from the camera,
-    // increasing.  The first hit result will usually be the most relevant when
-    // responding to user input.
 
-    ArHitResult* ar_hit_result = nullptr;
-    for (int32_t i = 0; i < hit_result_list_size; ++i) {
-      ArHitResult* ar_hit = nullptr;
-      ArHitResult_create(ar_session_, &ar_hit);
-      ArHitResultList_getItem(ar_session_, hit_result_list, i, ar_hit);
-
-      if (ar_hit == nullptr) {
-        LOGE("HelloArApplication::OnTouched ArHitResultList_getItem error");
-        return;
-      }
-
-      ArTrackable* ar_trackable = nullptr;
-      ArHitResult_acquireTrackable(ar_session_, ar_hit, &ar_trackable);
-      ArTrackableType ar_trackable_type = AR_TRACKABLE_NOT_VALID;
-      ArTrackable_getType(ar_session_, ar_trackable, &ar_trackable_type);
-      // Creates an anchor if a plane or an oriented point was hit.
-      if (AR_TRACKABLE_PLANE == ar_trackable_type) {
-        ArPose* ar_pose = nullptr;
-        ArPose_create(ar_session_, nullptr, &ar_pose);
-        ArHitResult_getHitPose(ar_session_, ar_hit, ar_pose);
-        int32_t in_polygon = 0;
-        ArPlane* ar_plane = ArAsPlane(ar_trackable);
-        ArPlane_isPoseInPolygon(ar_session_, ar_plane, ar_pose, &in_polygon);
-        ArPose_destroy(ar_pose);
-        if (!in_polygon) {
-          continue;
-        }
-
-        ar_hit_result = ar_hit;
-        break;
-      } else if (AR_TRACKABLE_POINT == ar_trackable_type) {
-        ArPoint* ar_point = ArAsPoint(ar_trackable);
-        ArPointOrientationMode mode;
-        ArPoint_getOrientationMode(ar_session_, ar_point, &mode);
-        if (AR_POINT_ORIENTATION_ESTIMATED_SURFACE_NORMAL == mode) {
-          ar_hit_result = ar_hit;
-          break;
-        }
-      }
-    }
-
-    if (ar_hit_result) {
-      // Note that the application is responsible for releasing the anchor
-      // pointer after using it. Call ArAnchor_release(anchor) to release.
-      ArAnchor* anchor = nullptr;
-      if (ArHitResult_acquireNewAnchor(ar_session_, ar_hit_result, &anchor) !=
-          AR_SUCCESS) {
-        LOGE(
-            "HelloArApplication::OnTouched ArHitResult_acquireNewAnchor error");
-        return;
-      }
-
-      ArTrackingState tracking_state = AR_TRACKING_STATE_STOPPED;
-      ArAnchor_getTrackingState(ar_session_, anchor, &tracking_state);
-      if (tracking_state != AR_TRACKING_STATE_TRACKING) {
-        ArAnchor_release(anchor);
-        return;
-      }
-
-      if (tracked_obj_set_.size() >= kMaxNumberOfAndroidsToRender) {
-        ArAnchor_release(tracked_obj_set_[0]);
-        tracked_obj_set_.erase(tracked_obj_set_.begin());
-      }
-
-      tracked_obj_set_.push_back(anchor);
-      ArHitResult_destroy(ar_hit_result);
-      ar_hit_result = nullptr;
-
-      ArHitResultList_destroy(hit_result_list);
-      hit_result_list = nullptr;
-    }
+    getHit(ar_session_, ar_frame_, /*x, y,*/ 0.5f*width_, 0.5f*height_, false,
+        [&anchors, &controller](ArAnchor* anchor){
+          if (anchors.size() >= kMaxNumberOfAndroidsToRender) {
+            ArAnchor_release(anchors[0]);
+            anchors.erase(anchors.begin());
+          }
+          anchors.push_back(anchor);
+          controller.onBoxFound();
+          return true;
+        });
   }
 }
 

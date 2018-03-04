@@ -2,7 +2,6 @@
 #ifndef C_GAME_BOX_RENDERER_H_
 #define C_GAME_BOX_RENDERER_H_
 
-
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <android/asset_manager.h>
@@ -28,8 +27,10 @@ public:
   void InitializeGlContent(AAssetManager* asset_manager);
 
   // Draws the provided plane.
-  void Draw(const glm::mat4& projection_mat, const glm::mat4& view_mat,
-            const glm::mat4& model_mat);
+  void Draw(const glm::mat4& projection_mat,
+            const glm::mat4& view_mat,
+            const glm::mat4& model_mat,
+            const float scale);
 
 private:
   void generateGameBoxVertices();

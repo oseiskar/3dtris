@@ -34,6 +34,7 @@ add_library(hello_ar_native SHARED
            src/main/cpp/plane_renderer.cc
            src/main/cpp/game_box_renderer.cc
            src/main/cpp/util.cc
+           src/main/cpp/game_controller.cc
            src/main/cpp/game/src/game.cpp
            src/main/cpp/game/src/game-box.cpp
            src/main/cpp/game/src/cemented-block-array.cpp

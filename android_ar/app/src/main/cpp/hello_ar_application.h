@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 
 #ifndef C_ARCORE_HELLOE_AR_HELLO_AR_APPLICATION_H_
@@ -33,7 +35,7 @@
 #include "plane_renderer.h"
 #include "game_box_renderer.h"
 #include "util.h"
-#include "api.hpp"
+#include "game_controller.h"
 
 namespace hello_ar {
 
@@ -96,12 +98,14 @@ private:
   // at some point has been found.
   bool first_plane_has_been_found_ = false;
 
-  std::unique_ptr<Game> game;
+  GameController game_controller_;
 
   BackgroundRenderer background_renderer_;
   PlaneRenderer plane_renderer_;
   GameBoxRenderer game_box_renderer_;
-  ObjRenderer andy_renderer_;
+
+  glm::mat4x4 game_model_mat_;
+  float game_scale_;
 
   int32_t plane_count_ = 0;
 };

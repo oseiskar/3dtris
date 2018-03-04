@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 #include "util.h"
 
@@ -382,6 +384,10 @@ void GetTransformMatrixFromAnchor(ArSession* ar_session,
   ArAnchor_getPose(ar_session, ar_anchor, pose.GetArPose());
   ArPose_getMatrix(ar_session, pose.GetArPose(),
                    glm::value_ptr(*out_model_mat));
+}
+
+glm::vec3 GetTranslation(const glm::mat4x4& mat) {
+  return glm::vec3 { mat[3][0], mat[3][1], mat[3][2] };
 }
 
 }  // namespace util

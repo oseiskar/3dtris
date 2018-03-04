@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 
 #ifndef C_ARCORE_HELLOE_AR_UTIL_H_
@@ -114,6 +116,9 @@ void Log4x4Matrix(float raw_matrix[16]);
 void GetTransformMatrixFromAnchor(ArSession* ar_session,
                                   const ArAnchor* ar_anchor,
                                   glm::mat4* out_model_mat);
+
+
+glm::vec3 GetTranslation(const glm::mat4x4& mat);
 }  // namespace util
 }  // namespace hello_ar
 

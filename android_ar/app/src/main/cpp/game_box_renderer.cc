@@ -90,7 +90,8 @@ void GameBoxRenderer::generateGameBoxVertices() {
 
 void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
                            const glm::mat4& view_mat,
-                           const glm::mat4& model_mat) {
+                           const glm::mat4& model_mat,
+                           const float scale) {
   if (!shader_program_) {
     LOGE("shader_program is null.");
     return;
@@ -100,7 +101,6 @@ void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
   glDepthMask(GL_FALSE);
   glLineWidth(5.0);
 
-  const float scale = 0.1;
   glm::mat4 scale_mat = glm::mat4(scale);
   scale_mat[3][3] = 1.0;
 
