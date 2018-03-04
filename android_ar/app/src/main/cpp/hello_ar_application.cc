@@ -218,8 +218,8 @@ void HelloArApplication::OnSurfaceCreated() {
   LOGI("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
-  //andy_renderer_.InitializeGlContent(asset_manager_, "cube.obj");
   game_box_renderer_.InitializeGlContent(asset_manager_);
+  game_renderer_.InitializeGlContent(asset_manager_);
   plane_renderer_.InitializeGlContent(asset_manager_);
 }
 
@@ -280,6 +280,14 @@ void HelloArApplication::OnDrawFrame() {
     return;
   }
 
+  int64_t frame_timestamp;
+  ArFrame_getTimestamp(ar_session_, ar_frame_, &frame_timestamp);
+  bool changed = game_controller_.onFrame(frame_timestamp);
+  if (changed) {
+    LOGI("game state changed");
+    game_renderer_.update(game_controller_.getGame(), game_scale_);
+  }
+
   // Get light estimation value.
   ArLightEstimate* ar_light_estimate;
   ArLightEstimateState ar_light_estimate_state;
@@ -311,6 +319,7 @@ void HelloArApplication::OnDrawFrame() {
       game_controller_.getState() == GameController::State::PAUSED_TRACKING_LOST) {
     game_controller_.onTrackingState(true);
     game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_);
+    game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
   }
 
   if (game_controller_.getState() == GameController::State::WAITING_FOR_PLANE ||

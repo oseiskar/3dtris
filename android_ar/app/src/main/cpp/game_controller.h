@@ -20,12 +20,15 @@ public:
   const Game& getGame() { return *game; }
   const State getState() { return state; }
 
+  bool onFrame(uint64_t timestamp);
   void onTrackingState(bool isTracking);
   void onBoxFound();
 
 private:
   std::unique_ptr<Game> game;
   State state;
+
+  uint64_t prevTimestamp;
 };
 
 

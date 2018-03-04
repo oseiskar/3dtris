@@ -12,11 +12,13 @@ inline static unsigned int getRandomSeedFromTime() {
   return static_cast<unsigned int>(res.tv_nsec ^ res.tv_sec);
 }
 
+constexpr int64_t MAX_FRAME_TIME = static_cast<int64_t>(0.1 * 1e9);
 }
 
 GameController::GameController() :
     game(buildGame(getRandomSeedFromTime())),
-    state(State::WAITING_FOR_PLANE)
+    state(State::WAITING_FOR_PLANE),
+    prevTimestamp(0)
 {}
 
 void GameController::onTrackingState(bool isTracking) {
@@ -52,5 +54,19 @@ void GameController::onTrackingState(bool isTracking) {
 void GameController::onBoxFound() {
   state = State::RUNNING;
   LOGI("GameController: box found, state RUNNING");
+}
+
+bool GameController::onFrame(uint64_t timestamp) {
+  bool changed = false;
+  if (state == State::RUNNING) {
+    int64_t dt = timestamp - prevTimestamp;
+    if (dt < 0) dt = 0;
+    if (dt > MAX_FRAME_TIME) dt = MAX_FRAME_TIME;
+    unsigned int dtMilliseconds = static_cast<unsigned int>(dt / 1000000);
+
+    changed = game->tick(dtMilliseconds);
+  }
+  prevTimestamp = timestamp;
+  return changed;
 }
 
