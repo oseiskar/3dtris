@@ -41,7 +41,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class HelloArActivity extends AppCompatActivity
     implements GLSurfaceView.Renderer, DisplayManager.DisplayListener {
   private static final String TAG = HelloArActivity.class.getSimpleName();
-  private static final int SNACKBAR_UPDATE_INTERVAL_MILLIS = 1000; // In milliseconds.
+  private static final int SNACKBAR_UPDATE_INTERVAL_MILLIS = 200; // In milliseconds.
 
   private GLSurfaceView mSurfaceView;
 
@@ -53,7 +53,7 @@ public class HelloArActivity extends AppCompatActivity
   private long mNativeApplication;
   private GestureDetector mGestureDetector;
 
-  private Snackbar mLoadingMessageSnackbar;
+  private Snackbar mSnackBar;
   private Handler mPlaneStatusCheckingHandler;
   private final Runnable mPlaneStatusCheckingRunnable =
       new Runnable() {
@@ -61,20 +61,40 @@ public class HelloArActivity extends AppCompatActivity
         public void run() {
           // The runnable is executed on main UI thread.
           try {
-            if (JniInterface.hasDetectedPlanes(mNativeApplication)) {
-              if (mLoadingMessageSnackbar != null) {
-                mLoadingMessageSnackbar.dismiss();
-              }
-              mLoadingMessageSnackbar = null;
+            final String text = getSnackBarMessage(mNativeApplication);
+            if (text == null) {
+              if (mSnackBar.isShown()) mSnackBar.dismiss();
             } else {
-              mPlaneStatusCheckingHandler.postDelayed(
-                  mPlaneStatusCheckingRunnable, SNACKBAR_UPDATE_INTERVAL_MILLIS);
+              if (!mSnackBar.isShown()) mSnackBar.show();
+              mSnackBar.setText(text);
             }
+            mPlaneStatusCheckingHandler.postDelayed(
+                    mPlaneStatusCheckingRunnable, SNACKBAR_UPDATE_INTERVAL_MILLIS);
           } catch (Exception e) {
             Log.e(TAG, e.getMessage());
           }
         }
       };
+
+  private static String getSnackBarMessage(long nativeApplication) {
+    if (JniInterface.isTracking(nativeApplication)) {
+      if (JniInterface.gameStarted(nativeApplication)) {
+        if (JniInterface.gameOver(nativeApplication)) {
+          return "Game over";
+        } else {
+          return null;
+        }
+      } else {
+        return "Tap the screen to place and start the game";
+      }
+    } else {
+      if (JniInterface.gameStarted(nativeApplication)) {
+        return "Tracking lost :(";
+      } else {
+        return "Searching for surfaces...";
+      }
+    }
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -139,14 +159,14 @@ public class HelloArActivity extends AppCompatActivity
     JniInterface.onResume(mNativeApplication, getApplicationContext(), this);
     mSurfaceView.onResume();
 
-    mLoadingMessageSnackbar =
+    mSnackBar =
         Snackbar.make(
             HelloArActivity.this.findViewById(android.R.id.content),
-            "Searching for surfaces...",
+            getSnackBarMessage(mNativeApplication),
             Snackbar.LENGTH_INDEFINITE);
     // Set the snackbar background to light transparent black color.
-    mLoadingMessageSnackbar.getView().setBackgroundColor(0xbf323232);
-    mLoadingMessageSnackbar.show();
+    mSnackBar.getView().setBackgroundColor(0xbf323232);
+    mSnackBar.show();
     mPlaneStatusCheckingHandler.postDelayed(
         mPlaneStatusCheckingRunnable, SNACKBAR_UPDATE_INTERVAL_MILLIS);
 

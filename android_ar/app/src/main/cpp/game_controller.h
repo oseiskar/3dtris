@@ -9,16 +9,18 @@ public:
   enum class State {
     WAITING_FOR_PLANE,
     WAITING_FOR_BOX,
-    RUNNING,
-    OVER,
+    RUNNING, // includes game over state
     PAUSED_TRACKING_LOST
   };
 
   GameController();
   ~GameController() = default;
 
-  const Game& getGame() { return *game; }
-  const State getState() { return state; }
+  const Game& getGame() const { return *game; }
+  const State getState() const { return state; }
+
+  bool getTrackingState() const;
+  bool hasStarted() const;
 
   bool onFrame(uint64_t timestamp);
   void onTrackingState(bool isTracking);

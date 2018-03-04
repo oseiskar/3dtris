@@ -91,10 +91,22 @@ JNI_METHOD(void, onTouched)
   native(native_application)->OnTouched(x, y);
 }
 
-JNI_METHOD(jboolean, hasDetectedPlanes)
+JNI_METHOD(jboolean, isTracking)
 (JNIEnv *, jclass, jlong native_application) {
   return static_cast<jboolean>(
-      native(native_application)->HasDetectedPlanes() ? JNI_TRUE : JNI_FALSE);
+      native(native_application)->IsTracking() ? JNI_TRUE : JNI_FALSE);
+}
+
+JNI_METHOD(jboolean, gameStarted)
+(JNIEnv *, jclass, jlong native_application) {
+  return static_cast<jboolean>(
+      native(native_application)->HasGameStarted() ? JNI_TRUE : JNI_FALSE);
+}
+
+JNI_METHOD(jboolean, gameOver)
+(JNIEnv *, jclass, jlong native_application) {
+  return static_cast<jboolean>(
+      native(native_application)->IsGameOver() ? JNI_TRUE : JNI_FALSE);
 }
 
 JNIEnv *GetJniEnv() {

@@ -51,6 +51,14 @@ void GameController::onTrackingState(bool isTracking) {
   }
 }
 
+bool GameController::getTrackingState() const {
+  return state == State::RUNNING || state == State::WAITING_FOR_BOX;
+}
+
+bool GameController::hasStarted() const {
+  return state >= State::RUNNING;
+}
+
 void GameController::onBoxFound() {
   state = State::RUNNING;
   LOGI("GameController: box found, state RUNNING");
@@ -58,7 +66,7 @@ void GameController::onBoxFound() {
 
 bool GameController::onFrame(uint64_t timestamp) {
   bool changed = false;
-  if (state == State::RUNNING) {
+  if (state == State::RUNNING && !game->isOver()) {
     int64_t dt = timestamp - prevTimestamp;
     if (dt < 0) dt = 0;
     if (dt > MAX_FRAME_TIME) dt = MAX_FRAME_TIME;
@@ -69,4 +77,3 @@ bool GameController::onFrame(uint64_t timestamp) {
   prevTimestamp = timestamp;
   return changed;
 }
-

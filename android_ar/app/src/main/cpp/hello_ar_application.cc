@@ -297,15 +297,12 @@ void HelloArApplication::OnDrawFrame() {
     }
   }
 
-  if (game_controller_.getState() == GameController::State::RUNNING ||
-      game_controller_.getState() == GameController::State::PAUSED_TRACKING_LOST) {
+  if (game_controller_.hasStarted()) {
     game_controller_.onTrackingState(true);
     game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_);
     game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
   }
-
-  if (game_controller_.getState() == GameController::State::WAITING_FOR_PLANE ||
-      game_controller_.getState() == GameController::State::WAITING_FOR_BOX) {
+  else {
 
     // Update and render planes.
     ArTrackableList* plane_list = nullptr;
@@ -317,7 +314,6 @@ void HelloArApplication::OnDrawFrame() {
 
     int32_t plane_list_size = 0;
     ArTrackableList_getSize(ar_session_, plane_list, &plane_list_size);
-    plane_count_ = plane_list_size;
 
     bool tracking_any_planes = false;
 
@@ -344,7 +340,6 @@ void HelloArApplication::OnDrawFrame() {
       ArTrackable_getTrackingState(ar_session_, ArAsTrackable(ar_plane),
           &plane_tracking_state);
       if (plane_tracking_state == AR_TRACKING_STATE_TRACKING) {
-        first_plane_has_been_found_ = true;
         tracking_any_planes = true;
       }
     }

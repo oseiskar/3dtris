@@ -74,7 +74,15 @@ public:
 
   // Returns true if any planes have been detected.  Used for hiding the
   // "searching for planes" snackbar.
-  bool HasDetectedPlanes() const { return plane_count_ > 0; }
+  bool IsTracking() const {
+    return game_controller_.getTrackingState();
+  }
+  bool HasGameStarted() const {
+    return game_controller_.hasStarted();
+  }
+  bool IsGameOver() const {
+    return game_controller_.getGame().isOver();
+  }
 
 private:
   ArSession* ar_session_ = nullptr;
@@ -90,10 +98,6 @@ private:
   // The anchors at which we are drawing android models
   std::vector<ArAnchor*> tracked_obj_set_;
 
-  // The first plane is always rendered in white, if this is true then a plane
-  // at some point has been found.
-  bool first_plane_has_been_found_ = false;
-
   GameController game_controller_;
 
   BackgroundRenderer background_renderer_;
@@ -102,8 +106,6 @@ private:
 
   glm::mat4x4 game_model_mat_;
   float game_scale_;
-
-  int32_t plane_count_ = 0;
 };
 }  // namespace hello_ar
 
