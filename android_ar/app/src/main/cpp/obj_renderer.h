@@ -38,8 +38,7 @@ class ObjRenderer {
   // Loads the OBJ file and texture and sets up OpenGL resources used to draw
   // the model.  Must be called on the OpenGL thread prior to any other calls.
   void InitializeGlContent(AAssetManager* asset_manager,
-                           const std::string& obj_file_name,
-                           const std::string& png_file_name);
+                           const std::string& obj_file_name);
 
   // Sets the surface's lighting reflectace properties.  Diffuse is modulated by
   // the texture's color.
@@ -65,9 +64,6 @@ class ObjRenderer {
   // Model triangle indices
   std::vector<GLushort> indices_;
 
-  // Loaded TEXTURE_2D object name
-  GLuint texture_id_;
-
   // Shader program details
   GLuint shader_program_;
   GLuint attri_vertices_;
@@ -75,7 +71,6 @@ class ObjRenderer {
   GLuint attri_normals_;
   GLuint uniform_mvp_mat_;
   GLuint uniform_mv_mat_;
-  GLuint uniform_texture_;
   GLuint uniform_lighting_param_;
   GLuint uniform_material_param_;
 };

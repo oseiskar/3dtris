@@ -31,7 +31,7 @@
 #include "glm.h"
 #include "obj_renderer.h"
 #include "plane_renderer.h"
-#include "point_cloud_renderer.h"
+#include "game_box_renderer.h"
 #include "util.h"
 #include "api.hpp"
 
@@ -96,12 +96,12 @@ private:
   // at some point has been found.
   bool first_plane_has_been_found_ = false;
 
-  PointCloudRenderer point_cloud_renderer_;
+  std::unique_ptr<Game> game;
+
   BackgroundRenderer background_renderer_;
   PlaneRenderer plane_renderer_;
+  GameBoxRenderer game_box_renderer_;
   ObjRenderer andy_renderer_;
-
-  std::unique_ptr<Game> game;
 
   int32_t plane_count_ = 0;
 };

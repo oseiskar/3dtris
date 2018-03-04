@@ -53,7 +53,9 @@ inline static unsigned int getRandomSeedFromTime() {
 }  // namespace
 
 HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
-    : asset_manager_(asset_manager), game(buildGame(getRandomSeedFromTime())) {
+    : asset_manager_(asset_manager),
+      game(buildGame(getRandomSeedFromTime())),
+      game_box_renderer_(game->getDimensions()) {
   LOGI("OnCreate()");
 }
 
@@ -129,8 +131,8 @@ void HelloArApplication::OnSurfaceCreated() {
   LOGI("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
-  point_cloud_renderer_.InitializeGlContent();
-  andy_renderer_.InitializeGlContent(asset_manager_, "andy.obj", "andy.png");
+  andy_renderer_.InitializeGlContent(asset_manager_, "cube.obj");
+  game_box_renderer_.InitializeGlContent(asset_manager_);
   plane_renderer_.InitializeGlContent(asset_manager_);
 }
 
@@ -214,7 +216,8 @@ void HelloArApplication::OnDrawFrame() {
     if (tracking_state == AR_TRACKING_STATE_TRACKING) {
       // Render object only if the tracking state is AR_TRACKING_STATE_TRACKING.
       util::GetTransformMatrixFromAnchor(ar_session_, obj_iter, &model_mat);
-      andy_renderer_.Draw(projection_mat, view_mat, model_mat, light_intensity);
+      //andy_renderer_.Draw(projection_mat, view_mat, model_mat, light_intensity);
+      game_box_renderer_.Draw(projection_mat, view_mat, model_mat);
     }
   }
 
@@ -279,16 +282,6 @@ void HelloArApplication::OnDrawFrame() {
 
   ArTrackableList_destroy(plane_list);
   plane_list = nullptr;
-
-  // Update and render point cloud.
-  ArPointCloud* ar_point_cloud = nullptr;
-  ArStatus point_cloud_status =
-      ArFrame_acquirePointCloud(ar_session_, ar_frame_, &ar_point_cloud);
-  if (point_cloud_status == AR_SUCCESS) {
-    point_cloud_renderer_.Draw(projection_mat * view_mat, ar_session_,
-                               ar_point_cloud);
-    ArPointCloud_release(ar_point_cloud);
-  }
 }
 
 void HelloArApplication::OnTouched(float x, float y) {
