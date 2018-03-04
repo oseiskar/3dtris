@@ -24,8 +24,7 @@ android {
             cmake {
                 cppFlags "-std=c++11", "-Wall"
                 arguments "-DANDROID_STL=c++_static",
-                        "-DARCORE_LIBPATH=${arcore_libpath}/jni",
-                        "-DARCORE_INCLUDE=${project.rootDir}/../../libraries/include"
+                        "-DARCORE_LIBPATH=${arcore_libpath}/jni"
             }
         }
         ndk {

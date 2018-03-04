@@ -33,12 +33,18 @@ add_library(hello_ar_native SHARED
            src/main/cpp/obj_renderer.cc
            src/main/cpp/plane_renderer.cc
            src/main/cpp/point_cloud_renderer.cc
-           src/main/cpp/util.cc)
+           src/main/cpp/util.cc
+           src/main/cpp/game/src/game.cpp
+           src/main/cpp/game/src/game-box.cpp
+           src/main/cpp/game/src/cemented-block-array.cpp
+           src/main/cpp/game/src/piece.cpp
+           src/main/cpp/game/src/piece-generator.cpp)
 
 target_include_directories(hello_ar_native PRIVATE
            src/main/cpp
             ${ARCORE_INCLUDE}
-            ${ANDROID_NDK}/sources/third_party/vulkan/src/libs/glm)
+            ${ANDROID_NDK}/sources/third_party/vulkan/src/libs/glm
+            src/main/cpp/game/include)
 
 target_link_libraries(hello_ar_native
                       android

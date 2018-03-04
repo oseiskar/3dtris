@@ -18,6 +18,8 @@
 
 #include <android/asset_manager.h>
 #include <array>
+#include <time.h>
+#include <string>
 
 #include "plane_renderer.h"
 #include "util.h"
@@ -29,10 +31,10 @@ constexpr int32_t kPlaneColorRgbaSize = 16;
 
 const glm::vec3 kWhite = {255, 255, 255};
 
-constexpr std::array<uint32_t, kPlaneColorRgbaSize> kPlaneColorRgba = {
+constexpr std::array<uint32_t, kPlaneColorRgbaSize> kPlaneColorRgba = {{
     0xFFFFFFFF, 0xF44336FF, 0xE91E63FF, 0x9C27B0FF, 0x673AB7FF, 0x3F51B5FF,
     0x2196F3FF, 0x03A9F4FF, 0x00BCD4FF, 0x009688FF, 0x4CAF50FF, 0x8BC34AFF,
-    0xCDDC39FF, 0xFFEB3BFF, 0xFFC107FF, 0xFF9800FF};
+    0xCDDC39FF, 0xFFEB3BFF, 0xFFC107FF, 0xFF9800FF}};
 
 inline glm::vec3 GetRandomPlaneColor() {
   const int32_t colorRgba = kPlaneColorRgba[std::rand() % kPlaneColorRgbaSize];
@@ -40,10 +42,18 @@ inline glm::vec3 GetRandomPlaneColor() {
                    ((colorRgba >> 16) & 0xff) / 255.0f,
                    ((colorRgba >> 8) & 0xff) / 255.0f);
 }
+
+inline static unsigned int getRandomSeedFromTime() {
+  // use the current time modulo something as the random seed
+  // ... for the game, this is not crypto stuff!
+  struct timespec res;
+  clock_gettime(CLOCK_REALTIME, &res);
+  return static_cast<unsigned int>(res.tv_nsec ^ res.tv_sec);
+}
 }  // namespace
 
 HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
-    : asset_manager_(asset_manager) {
+    : asset_manager_(asset_manager), game(buildGame(getRandomSeedFromTime())) {
   LOGI("OnCreate()");
 }
 
