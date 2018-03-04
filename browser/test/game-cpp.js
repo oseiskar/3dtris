@@ -29,6 +29,7 @@ QUnit.test( "game basics", function( assert ) {
 
     assert.equal( game.getActiveBlocks().length, 4 );
     assert.equal( game.getCementedBlocks().length, 8 );
+    assert.equal( game.getAllBlocks().length, 12 );
     game.delete();
 
     const anotherGame = new Game(1);

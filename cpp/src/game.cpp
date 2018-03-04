@@ -33,6 +33,13 @@ std::vector<Block> ConcreteGame::getCementedBlocks() const {
     return blockArray.getNonEmptyBlocks();
 }
 
+std::vector<Block> ConcreteGame::getAllBlocks() const {
+    auto blocks = getCementedBlocks();
+    auto active = getActiveBlocks();
+    blocks.insert(blocks.end(), active.begin(), active.end());
+    return blocks;
+}
+
 bool ConcreteGame::isOver() const {
     return !alive;
 }
@@ -47,6 +54,8 @@ Pos3d ConcreteGame::getDimensions() const {
 
 // timed events
 bool ConcreteGame::tick(int dtMs) {
+
+    if (isOver()) return false;
 
     timeToNextDownMs -= dtMs;
     if (timeToNextDownMs <= 0) {

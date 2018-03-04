@@ -41,6 +41,10 @@ class Game {
     getActiveBlocks() {
         return Game._vectorToJsArray(this._game.getActiveBlocks());
     }
+
+    getAllBlocks() {
+        return Game._vectorToJsArray(this._game.getAllBlocks());
+    }
 }
 
 Game._vectorToJsArray = function (vec) {

@@ -37,5 +37,6 @@ EMSCRIPTEN_BINDINGS(game_api) {
     .function("rotate", &Game::rotate)
     .function("drop", &Game::drop)
     .function("getCementedBlocks", &Game::getCementedBlocks)
-    .function("getActiveBlocks", &Game::getActiveBlocks);
+    .function("getActiveBlocks", &Game::getActiveBlocks)
+    .function("getAllBlocks", &Game::getAllBlocks);
 }

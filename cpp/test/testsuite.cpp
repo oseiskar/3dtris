@@ -237,7 +237,9 @@ TEST_CASE( "ConcreteGame" "[concrete-game]") {
         std::unique_ptr<Game> game = buildGame(0);
         REQUIRE( !game->isOver() );
         REQUIRE( game->getScore() == 0 );
+        REQUIRE( game->getCementedBlocks().size() == 0 );
         REQUIRE( game->getActiveBlocks().size() > 0 );
+        REQUIRE( game->getActiveBlocks().size() == game->getAllBlocks().size() );
     }
 
     SECTION("should end in 2-100 drops") {
@@ -245,6 +247,14 @@ TEST_CASE( "ConcreteGame" "[concrete-game]") {
 
         game->drop();
         REQUIRE( !game->isOver() );
+
+        {
+            auto activeSize = game->getActiveBlocks().size();
+            auto cementedSize = game->getCementedBlocks().size();
+            REQUIRE( activeSize > 0 );
+            REQUIRE( cementedSize > 0 );
+            REQUIRE( game->getAllBlocks().size() == activeSize + cementedSize );
+        }
 
         for (int i = 0; i < 100; ++i) {
             game->drop();
@@ -273,6 +283,12 @@ TEST_CASE( "ConcreteGame" "[concrete-game]") {
 
         REQUIRE( nEvents > 10 ); // there should be many events
         REQUIRE( game->isOver() );
+
+        // should not crash on extra ticks
+        for (int i = 0; i < N_FRAMES; ++i) {
+            REQUIRE( !game->tick(FRAME_MS) );
+            REQUIRE( game->isOver() );
+        }
     }
 
     SECTION("move XY") {

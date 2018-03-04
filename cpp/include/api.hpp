@@ -24,6 +24,8 @@ class Game {
 public:
     virtual std::vector<Block> getActiveBlocks() const = 0;
     virtual std::vector<Block> getCementedBlocks() const = 0;
+    virtual std::vector<Block> getAllBlocks() const = 0;
+
     virtual bool isOver() const = 0;
     virtual int getScore() const = 0;
     virtual Pos3d getDimensions() const = 0;

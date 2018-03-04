@@ -95,11 +95,9 @@ function gameRenderer(game) {
         () => randomMaterial());
 
     return function() {
-
         $("#score").text(game.getScore());
 
-        let blocks = game.getCementedBlocks();
-        blocks = blocks.concat(game.getActiveBlocks());
+        let blocks = game.getAllBlocks();
 
         const meshes = blocks.map(block => {
             var material = blockMaterials[block.pieceId % N_BLOCK_MATERIALS];

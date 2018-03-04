@@ -15,6 +15,7 @@ public:
 
     std::vector<Block> getActiveBlocks() const override;
     std::vector<Block> getCementedBlocks() const override;
+    std::vector<Block> getAllBlocks() const override;
 
     bool isOver() const override;
     int getScore() const override;
