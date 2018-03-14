@@ -117,8 +117,12 @@ void GetTransformMatrixFromAnchor(ArSession* ar_session,
                                   const ArAnchor* ar_anchor,
                                   glm::mat4* out_model_mat);
 
-
 glm::vec3 GetTranslation(const glm::mat4x4& mat);
+
+void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
+                 float x, float y, int w, int h,
+                 glm::vec3& origin, glm::vec3& dir);
+
 }  // namespace util
 }  // namespace hello_ar
 

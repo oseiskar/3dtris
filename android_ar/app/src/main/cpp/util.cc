@@ -390,5 +390,38 @@ glm::vec3 GetTranslation(const glm::mat4x4& mat) {
   return glm::vec3 { mat[3][0], mat[3][1], mat[3][2] };
 }
 
+void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
+                 float x, float y, int w, int h,
+                 glm::vec3& origin, glm::vec3& dir) {
+
+  ArCamera* ar_camera;
+  ArFrame_acquireCamera(ar_session, ar_frame, &ar_camera);
+
+  glm::mat4 view_mat;
+  glm::mat4 projection_mat;
+  ArCamera_getViewMatrix(ar_session, ar_camera, glm::value_ptr(view_mat));
+  ArCamera_getProjectionMatrix(ar_session, ar_camera,
+      /*near=*/0.1f, /*far=*/100.f,
+      glm::value_ptr(projection_mat));
+
+  ArTrackingState camera_tracking_state;
+  ArCamera_getTrackingState(ar_session, ar_camera, &camera_tracking_state);
+  ArCamera_release(ar_camera);
+
+  const float x_rel = x / w;
+  const float y_rel = y / h;
+
+  const float x_ndc = (x_rel - 0.5f)*2.0f;
+  const float y_ndc = (y_rel - 0.5f)*2.0f;
+
+  const glm::vec4 v = glm::inverse(view_mat)
+                      * glm::inverse(projection_mat)
+                      * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
+  const glm::vec3 v3(v.x, v.y, v.z);
+
+  dir = v3 / glm::length(v3);
+  origin = GetTranslation(view_mat);
+}
+
 }  // namespace util
 }  // namespace hello_ar

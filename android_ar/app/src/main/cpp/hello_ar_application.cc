@@ -362,8 +362,7 @@ void HelloArApplication::OnDrawFrame() {
           util::GetTransformMatrixFromAnchor(session, anchor, &model_mat);
 
           const glm::vec3 delta = util::GetTranslation(view_mat * model_mat);
-          const float dist = sqrt(delta.x*delta.x + delta.y*delta.y + delta.z*delta.z);
-          scale = 0.05f * dist;
+          scale = 0.05f * glm::length(delta);
 
           renderer.Draw(projection_mat, view_mat, model_mat, scale);
           return false;
@@ -388,6 +387,12 @@ void HelloArApplication::OnTouched(float x, float y) {
           controller.onBoxFound();
           return true;
         });
+  }
+  else if (anchors.size() > 0) {
+    glm::vec3 touch_origin, touch_dir;
+    util::GetTouchRay(ar_session_, ar_frame_, x, y, width_, height_, touch_origin, touch_dir);
+    LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
+    LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
   }
 }
 
