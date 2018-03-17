@@ -302,7 +302,7 @@ void MainApplication::OnDrawFrame() {
 
   if (game_controller_.hasStarted()) {
     game_controller_.onTrackingState(true);
-    game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_);
+    game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_, true);
     game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
   }
   else {
@@ -367,7 +367,7 @@ void MainApplication::OnDrawFrame() {
           const glm::vec3 delta = util::GetTranslation(view_mat * model_mat);
           scale = 0.05f * glm::length(delta);
 
-          renderer.Draw(projection_mat, view_mat, model_mat, scale);
+          renderer.Draw(projection_mat, view_mat, model_mat, scale, false);
           return false;
         });
   }

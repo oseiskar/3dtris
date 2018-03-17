@@ -46,19 +46,19 @@ public:
   void update(const Game& game, float game_scale);
 
 private:
-  // Shader material lighting pateremrs
-  float ambient_ = 0.0f;
-  float diffuse_ = 3.5f;
-  float specular_ = 1.0f;
-  float specular_power_ = 6.0f;
+
+  struct Model {
+    std::vector<GLfloat> vertices;
+    std::vector<GLfloat> uvs;
+    std::vector<GLfloat> normals;
+    std::vector<GLushort> indices;
+  };
 
   // Model attribute arrays
-  std::vector<GLfloat> cube_vertices_, vertices_;
-  std::vector<GLfloat> cube_uvs_, uvs_;
-  std::vector<GLfloat> cube_normals_, normals_;
+  Model cube_;
 
-  // Model triangle indices
-  std::vector<GLushort> cube_indices_, indices_;
+  std::vector<Model> scene_by_material_;
+  std::vector<glm::vec3> material_colors_;
 
   // Shader program details
   GLuint shader_program_;
@@ -69,6 +69,9 @@ private:
   GLuint uniform_mv_mat_;
   GLuint uniform_lighting_param_;
   GLuint uniform_material_param_;
+  GLuint uniform_diffuse_color_;
+
+  Model blocksToModel(const std::vector<Block> &blocks, Pos3d dims, float game_scale) const;
 };
 
 extern const glm::mat4 GAME_MODEL_TRANSFORM;

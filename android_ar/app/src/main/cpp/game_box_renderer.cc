@@ -24,7 +24,8 @@ namespace {
       gl_FragColor = u_Color;
   })";
 
-  const glm::vec4 kColor = {1.0f, 0.0f, 1.0f, 0.5f};
+  const glm::vec4 STARTED_COLOR = {1.0f, 1.0f, 1.0f, 0.2f};
+  const glm::vec4 NOT_STARTED_COLOR = {0.7f, 0.7f, 1.0f, 0.6f};
 }  // namespace
 
 GameBoxRenderer::GameBoxRenderer(Pos3d dims) : dimensions(dims) {}
@@ -81,7 +82,8 @@ void GameBoxRenderer::generateGameBoxVertices() {
 void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
                            const glm::mat4& view_mat,
                            const glm::mat4& model_mat,
-                           const float scale) {
+                           const float scale,
+                           bool started) {
   if (!shader_program_) {
     LOGE("shader_program is null.");
     return;
@@ -97,7 +99,13 @@ void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
   glm::mat4 mvp_mat = projection_mat * view_mat * model_mat * GAME_MODEL_TRANSFORM * scale_mat;
   //glm::mat4 mv_mat = view_mat * model_mat;
 
-  glUniform4f(uniform_color_, kColor.r, kColor.g, kColor.b, kColor.a);
+  glm::vec4 color;
+  if (started) {
+    color = STARTED_COLOR;
+  } else {
+    color = NOT_STARTED_COLOR;
+  }
+  glUniform4f(uniform_color_, color.r, color.g, color.b, color.a);
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
   //glUniformMatrix4fv(uniform_mv_mat_, 1, GL_FALSE, glm::value_ptr(mv_mat));
 

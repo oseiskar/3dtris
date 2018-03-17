@@ -28,7 +28,8 @@ public:
   void Draw(const glm::mat4& projection_mat,
             const glm::mat4& view_mat,
             const glm::mat4& model_mat,
-            const float scale);
+            const float scale,
+            bool started);
 
 private:
   void generateGameBoxVertices();

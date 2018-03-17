@@ -21,7 +21,16 @@
 #include <array>
 
 namespace {
-const glm::vec4 kLightDirection(0.0f, 1.0f, 0.0f, 0.0f);
+const glm::vec4 kLightDirection(0.5f, 1.0f, 2.0f, 0.0f);
+
+// Shader material lighting "pateremrs" [sic]
+// ... just wondering how sleep-deprived the Google interns who wrote the original
+// shader were after the ARKit release :P
+
+constexpr float AMBIENT = 0.0f;
+constexpr float DIFFUSE = 3.5f;
+constexpr float SPECULAR = 1.0f;
+constexpr float SPECULAR_POWER = 6.0f;
 
 constexpr char kVertexShader[] = R"(
 uniform mat4 u_ModelView;
@@ -47,6 +56,7 @@ precision mediump float;
 
 uniform vec4 u_LightingParameters;
 uniform vec4 u_MaterialParameters;
+uniform vec3 u_DiffuseColor;
 
 varying vec3 v_ViewPosition;
 varying vec3 v_ViewNormal;
@@ -71,7 +81,7 @@ void main() {
     vec3 viewFragmentDirection = normalize(v_ViewPosition);
     vec3 viewNormal = normalize(v_ViewNormal);
 
-    vec4 objectColor = vec4(0.5, 0.5, 0.5, 0.5);
+    vec4 objectColor = vec4(u_DiffuseColor, 1.0);
     objectColor.rgb = pow(objectColor.rgb, vec3(kInverseGamma));
 
     // Ambient light is unaffected by the light intensity.
@@ -109,13 +119,48 @@ constexpr std::array<uint32_t, kBlockColorRgbaSize> kBlockColorRgba = {{
    0x2196F3FF, 0x03A9F4FF, 0x00BCD4FF, 0x009688FF, 0x4CAF50FF, 0x8BC34AFF,
    0xCDDC39FF, 0xFFEB3BFF, 0xFFC107FF, 0xFF9800FF }};
 
-inline glm::vec3 GetRandomBlockColor() {
-  const int32_t colorRgba = kBlockColorRgba[std::rand() % kBlockColorRgbaSize];
+constexpr float COLOR_LIGHTNESS = 0.7;
+
+inline glm::vec3 GetBlockColor(int i) {
+  const int32_t colorRgba = kBlockColorRgba[i % kBlockColorRgbaSize];
   return glm::vec3(((colorRgba >> 24) & 0xff) / 255.0f,
       ((colorRgba >> 16) & 0xff) / 255.0f,
-      ((colorRgba >> 8) & 0xff) / 255.0f);
+      ((colorRgba >> 8) & 0xff) / 255.0f) * COLOR_LIGHTNESS;
 }
 }  // namespace
+
+
+GameRenderer::Model GameRenderer::blocksToModel(const std::vector<Block>& blocks,
+                                                Pos3d dims,
+                                                float game_scale) const {
+  Model m = Model();
+
+  int index_offset = 0;
+  for (Block block : blocks) {
+    float pos[3] = {
+        block.pos.x + 0.5f - dims.x*0.5f,
+        block.pos.y + 0.5f - dims.y*0.5f,
+        block.pos.z + 0.5f
+    };
+    for (int vertex_index=0; vertex_index < cube_.vertices.size() / 3; ++vertex_index) {
+      for (int coord = 0; coord < 3; ++coord) {
+        m.vertices.push_back((cube_.vertices[vertex_index*3+coord]+pos[coord])*game_scale);
+      }
+    }
+
+    for (int index : cube_.indices) {
+      m.indices.push_back(index + index_offset);
+    }
+    index_offset += cube_.indices.size();
+
+    // copy others unmodified
+    //m.uvs.insert(uvs_.end(), cube_uvs_.begin(), cube_uvs_.end());
+    m.normals.insert(m.normals.end(), cube_.normals.begin(), cube_.normals.end());
+
+  }
+
+  return m;
+}
 
 const glm::mat4 GAME_MODEL_TRANSFORM = glm::make_mat4(yIsUpInsteadOfZEl);
 
@@ -135,47 +180,43 @@ void GameRenderer::InitializeGlContent(AAssetManager* asset_manager) {
   uniform_material_param_ =
       glGetUniformLocation(shader_program_, "u_MaterialParameters");
 
+  uniform_diffuse_color_ =
+      glGetUniformLocation(shader_program_, "u_DiffuseColor");
+
   attri_vertices_ = glGetAttribLocation(shader_program_, "a_Position");
   //attri_uvs_ = glGetAttribLocation(shader_program_, "a_TexCoord");
   attri_normals_ = glGetAttribLocation(shader_program_, "a_Normal");
 
-  util::LoadObjFile(asset_manager, "cube.obj", &cube_vertices_, &cube_normals_, &cube_uvs_, &cube_indices_);
+  util::LoadObjFile(asset_manager, "cube.obj", &cube_.vertices, &cube_.normals, &cube_.uvs, &cube_.indices);
 
   util::CheckGlError("obj_renderer::InitializeGlContent()");
+
+  // initialize colors
+  material_colors_.clear();
+  scene_by_material_.clear();
+  const int nMaterials = kBlockColorRgbaSize;
+  const int randomOffset = std::rand();
+  for (int i = 0; i < nMaterials; ++i) {
+    material_colors_.push_back(GetBlockColor(i + randomOffset));
+    scene_by_material_.push_back(Model());
+  }
 }
 
 void GameRenderer::update(const Game& game, float game_scale) {
   // TODO: vertex buffer
 
-  vertices_.clear();
-  //uvs_.clear();
-  normals_.clear();
-  indices_.clear();
+  const int nMaterials = material_colors_.size();
 
-  int index_offset = 0;
+  std::vector< std::vector<Block> > blocks_by_material(nMaterials);
+
   for (Block block : game.getAllBlocks()) {
-    float pos[3] = {
-        block.pos.x + 0.5f - game.getDimensions().x*0.5f,
-        block.pos.y + 0.5f - game.getDimensions().y*0.5f,
-        block.pos.z + 0.5f
-    };
-    for (int vertex_index=0; vertex_index < cube_vertices_.size() / 3; ++vertex_index) {
-      for (int coord = 0; coord < 3; ++coord) {
-        vertices_.push_back((cube_vertices_[vertex_index*3+coord]+pos[coord])*game_scale);
-      }
-    }
-
-    for (int index : cube_indices_) {
-      indices_.push_back(index + index_offset);
-    }
-    index_offset += cube_indices_.size();
-
-    // copy others unmodified
-    //uvs_.insert(uvs_.end(), cube_uvs_.begin(), cube_uvs_.end());
-    normals_.insert(normals_.end(), cube_normals_.begin(), cube_normals_.end());
-
+    const int materialId = block.pieceId % nMaterials;
+    blocks_by_material[materialId].push_back(block);
   }
 
+  for (int i = 0; i < nMaterials; ++i) {
+    scene_by_material_[i] = blocksToModel(blocks_by_material[i], game.getDimensions(), game_scale);
+  }
 }
 
 void GameRenderer::Draw(const glm::mat4& projection_mat,
@@ -183,10 +224,6 @@ void GameRenderer::Draw(const glm::mat4& projection_mat,
                        float light_intensity) const {
   if (!shader_program_) {
     LOGE("shader_program is null.");
-    return;
-  }
-
-  if (vertices_.size() == 0) {
     return;
   }
 
@@ -199,32 +236,40 @@ void GameRenderer::Draw(const glm::mat4& projection_mat,
   glUniform4f(uniform_lighting_param_, view_light_direction[0],
       view_light_direction[1], view_light_direction[2],
       light_intensity);
-  glUniform4f(uniform_material_param_, ambient_, diffuse_, specular_,
-      specular_power_);
 
+  glUniform4f(uniform_material_param_, AMBIENT, DIFFUSE, SPECULAR, SPECULAR_POWER);
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
   glUniformMatrix4fv(uniform_mv_mat_, 1, GL_FALSE, glm::value_ptr(mv_mat));
 
-  // Note: for simplicity, we are uploading the model each time we draw it.  A
-  // real application should use vertex buffers to upload the geometry once.
+  for (int i = 0; i < scene_by_material_.size(); ++i) {
+    const Model& model = scene_by_material_[i];
+    if (model.vertices.size() == 0) {
+      continue;
+    }
 
-  glEnableVertexAttribArray(attri_vertices_);
-  glVertexAttribPointer(attri_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
-      vertices_.data());
+    const glm::vec3 color = material_colors_[i];
 
-  glEnableVertexAttribArray(attri_normals_);
-  glVertexAttribPointer(attri_normals_, 3, GL_FLOAT, GL_FALSE, 0,
-      normals_.data());
+    glUniform3f(uniform_diffuse_color_, color.x, color.y, color.z);
 
-  //glEnableVertexAttribArray(attri_uvs_);
-  //glVertexAttribPointer(attri_uvs_, 2, GL_FLOAT, GL_FALSE, 0, uvs_.data());
+    glEnableVertexAttribArray(attri_vertices_);
+    glVertexAttribPointer(attri_vertices_, 3, GL_FLOAT, GL_FALSE, 0,
+        model.vertices.data());
 
-  glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_SHORT,
-      indices_.data());
+    glEnableVertexAttribArray(attri_normals_);
+    glVertexAttribPointer(attri_normals_, 3, GL_FLOAT, GL_FALSE, 0,
+        model.normals.data());
 
-  glDisableVertexAttribArray(attri_vertices_);
-  //glDisableVertexAttribArray(attri_uvs_);
-  glDisableVertexAttribArray(attri_normals_);
+    //glEnableVertexAttribArray(attri_uvs_);
+    //glVertexAttribPointer(attri_uvs_, 2, GL_FLOAT, GL_FALSE, 0, uvs_.data());
+
+    glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_SHORT,
+        model.indices.data());
+
+    glDisableVertexAttribArray(attri_vertices_);
+    //glDisableVertexAttribArray(attri_uvs_);
+    glDisableVertexAttribArray(attri_normals_);
+  }
+
 
   glUseProgram(0);
   util::CheckGlError("obj_renderer::Draw()");
