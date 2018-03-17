@@ -32,12 +32,12 @@ namespace {
 // maintain a reference to the JVM so we can use it later.
 static JavaVM *g_vm = nullptr;
 
-inline jlong jptr(hello_ar::HelloArApplication *native_hello_ar_application) {
+inline jlong jptr(HelloArApplication *native_hello_ar_application) {
   return reinterpret_cast<intptr_t>(native_hello_ar_application);
 }
 
-inline hello_ar::HelloArApplication *native(jlong ptr) {
-  return reinterpret_cast<hello_ar::HelloArApplication *>(ptr);
+inline HelloArApplication *native(jlong ptr) {
+  return reinterpret_cast<HelloArApplication *>(ptr);
 }
 
 }  // namespace
@@ -50,7 +50,7 @@ jint JNI_OnLoad(JavaVM *vm, void *) {
 JNI_METHOD(jlong, createNativeApplication)
 (JNIEnv *env, jclass, jobject j_asset_manager) {
   AAssetManager *asset_manager = AAssetManager_fromJava(env, j_asset_manager);
-  return jptr(new hello_ar::HelloArApplication(asset_manager));
+  return jptr(new HelloArApplication(asset_manager));
 }
 
 JNI_METHOD(void, destroyNativeApplication)

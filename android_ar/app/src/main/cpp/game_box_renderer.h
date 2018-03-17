@@ -15,8 +15,6 @@
 #include "glm.h"
 #include "api.hpp"
 
-namespace hello_ar {
-
 class GameBoxRenderer {
 public:
   GameBoxRenderer(Pos3d dimensions);
@@ -50,7 +48,5 @@ private:
   GLuint uniform_mv_mat_;
   GLuint uniform_color_;
 };
-
-}  // namespace hello_ar
 
 #endif

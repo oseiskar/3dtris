@@ -23,7 +23,6 @@
 
 #include "jni_interface.h"
 
-namespace hello_ar {
 namespace util {
 
 void CheckGlError(const char* operation) {
@@ -426,4 +425,3 @@ void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
 }
 
 }  // namespace util
-}  // namespace hello_ar

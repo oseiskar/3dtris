@@ -50,8 +50,6 @@
   }
 #endif  // CHECK
 
-namespace hello_ar {
-
 // Utilities for C hello AR project.
 namespace util {
 
@@ -124,6 +122,5 @@ void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
                  glm::vec3& origin, glm::vec3& dir);
 
 }  // namespace util
-}  // namespace hello_ar
 
 #endif  // C_ARCORE_HELLOE_AR_UTIL_H_

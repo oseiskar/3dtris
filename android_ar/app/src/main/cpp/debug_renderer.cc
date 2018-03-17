@@ -1,8 +1,6 @@
-
 #include "debug_renderer.h"
 #include "util.h"
 
-namespace hello_ar {
 namespace {
   constexpr char kVertexShader[] = R"(
   precision highp float;
@@ -89,4 +87,3 @@ void DebugRenderer::Draw(const glm::mat4& projection_mat,
   //glDepthMask(GL_TRUE);
   util::CheckGlError("DebugRenderer::Draw()");
 }
-}  // namespace hello_ar

@@ -30,8 +30,6 @@
 #include "glm.h"
 #include "api.hpp"
 
-namespace hello_ar {
-
 class GameRenderer {
 public:
   GameRenderer() = default;
@@ -74,7 +72,5 @@ private:
 };
 
 extern const glm::mat4 GAME_MODEL_TRANSFORM;
-
-}  // namespace hello_ar
 
 #endif

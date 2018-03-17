@@ -24,7 +24,6 @@
 
 #include "util.h"
 
-namespace hello_ar {
 namespace {
 constexpr size_t kMaxAnchors = 20;
 
@@ -419,5 +418,3 @@ void HelloArApplication::OnTouched(float x, float y) {
     } // else no front-face ray intersection
   }
 }
-
-}  // namespace hello_ar

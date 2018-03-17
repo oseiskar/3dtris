@@ -2,9 +2,7 @@
 #include "game_box_renderer.h"
 #include "game_renderer.h" // GAME_MODEL_TRANSFORM
 #include "util.h"
-#include <gtc/type_ptr.hpp>
 
-namespace hello_ar {
 namespace {
   constexpr char kVertexShader[] = R"(
   precision highp float;
@@ -123,4 +121,3 @@ void GameBoxRenderer::Draw(const glm::mat4& projection_mat,
   //glDepthMask(GL_TRUE);
   util::CheckGlError("GameBoxRenderer::Draw()");
 }
-}  // namespace hello_ar

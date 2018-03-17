@@ -20,11 +20,10 @@
 #include "util.h"
 #include <array>
 
-namespace hello_ar {
-  namespace {
-    const glm::vec4 kLightDirection(0.0f, 1.0f, 0.0f, 0.0f);
+namespace {
+const glm::vec4 kLightDirection(0.0f, 1.0f, 0.0f, 0.0f);
 
-    constexpr char kVertexShader[] = R"(
+constexpr char kVertexShader[] = R"(
 uniform mat4 u_ModelView;
 uniform mat4 u_ModelViewProjection;
 
@@ -43,7 +42,7 @@ void main() {
     gl_Position = u_ModelViewProjection * a_Position;
 })";
 
-    constexpr char kFragmentShader[] = R"(
+constexpr char kFragmentShader[] = R"(
 precision mediump float;
 
 uniform vec4 u_LightingParameters;
@@ -230,5 +229,3 @@ void GameRenderer::Draw(const glm::mat4& projection_mat,
   glUseProgram(0);
   util::CheckGlError("obj_renderer::Draw()");
 }
-
-}  // namespace hello_ar

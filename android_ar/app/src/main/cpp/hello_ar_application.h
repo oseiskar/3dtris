@@ -37,8 +37,6 @@
 #include "util.h"
 #include "game_controller.h"
 
-namespace hello_ar {
-
 // HelloArApplication handles all application logics.
 class HelloArApplication {
 public:
@@ -109,6 +107,5 @@ private:
   glm::mat4x4 game_model_mat_;
   float game_scale_;
 };
-}  // namespace hello_ar
 
 #endif  // C_ARCORE_HELLOE_AR_HELLO_AR_APPLICATION_H_

@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 
 #ifndef C_ARCORE_HELLOE_AR_BACKGROUND_RENDERER_H_
@@ -23,8 +25,6 @@
 
 #include "arcore_c_api.h"
 #include "util.h"
-
-namespace hello_ar {
 
 // This class renders the passthrough camera image into the OpenGL frame.
 class BackgroundRenderer {
@@ -56,5 +56,4 @@ class BackgroundRenderer {
   float transformed_uvs_[kNumVertices * 2];
   bool uvs_initialized_ = false;
 };
-}  // namespace hello_ar
 #endif  // TANGO_GL_VIDEO_OVERLAY_H_

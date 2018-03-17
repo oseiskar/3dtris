@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
 
 // This modules handles drawing the passthrough camera image into the OpenGL
@@ -21,7 +23,6 @@
 
 #include "background_renderer.h"
 
-namespace hello_ar {
 namespace {
 // Positions of the quad vertices in clip space (X, Y, Z).
 const GLfloat kVertices[] = {
@@ -110,5 +111,3 @@ void BackgroundRenderer::Draw(const ArSession* session, const ArFrame* frame) {
 }
 
 GLuint BackgroundRenderer::GetTextureId() const { return texture_id_; }
-
-}  // namespace hello_ar

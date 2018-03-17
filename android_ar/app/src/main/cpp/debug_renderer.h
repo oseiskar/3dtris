@@ -15,8 +15,6 @@
 #include "glm.h"
 #include "api.hpp"
 
-namespace hello_ar {
-
 class DebugRenderer {
 public:
   DebugRenderer();
@@ -39,7 +37,5 @@ private:
   GLuint uniform_mvp_mat_;
   GLuint uniform_color_;
 };
-
-}  // namespace hello_ar
 
 #endif
