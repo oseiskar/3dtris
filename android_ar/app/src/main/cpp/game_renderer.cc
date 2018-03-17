@@ -38,16 +38,16 @@ uniform mat4 u_ModelViewProjection;
 
 attribute vec4 a_Position;
 attribute vec3 a_Normal;
-//attribute vec2 a_TexCoord;
+attribute vec2 a_TexCoord;
 
 varying vec3 v_ViewPosition;
 varying vec3 v_ViewNormal;
-//varying vec2 v_TexCoord;
+varying vec2 v_TexCoord;
 
 void main() {
     v_ViewPosition = (u_ModelView * a_Position).xyz;
     v_ViewNormal = normalize((u_ModelView * vec4(a_Normal, 0.0)).xyz);
-    //v_TexCoord = a_TexCoord;
+    v_TexCoord = a_TexCoord;
     gl_Position = u_ModelViewProjection * a_Position;
 })";
 
@@ -60,12 +60,15 @@ uniform vec3 u_DiffuseColor;
 
 varying vec3 v_ViewPosition;
 varying vec3 v_ViewNormal;
-//varying vec2 v_TexCoord;
+varying vec2 v_TexCoord;
 
 void main() {
     // We support approximate sRGB gamma.
     const float kGamma = 0.4545454;
     const float kInverseGamma = 2.2;
+
+    const float EDGE_WIDTH = 0.02;
+    const float EDGE_BRIGHTNESS = 0.3;
 
     // Unpack lighting and material parameters for better naming.
     vec3 viewLightDirection = u_LightingParameters.xyz;
@@ -90,6 +93,11 @@ void main() {
     // Approximate a hemisphere light (not a harsh directional light).
     float diffuse = lightIntensity * materialDiffuse *
             0.5 * (dot(viewNormal, viewLightDirection) + 1.0);
+
+    vec2 edgeVec = abs((v_TexCoord - 0.5)*2.0);
+    float edgeness = max(edgeVec.x, edgeVec.y);
+
+    if (edgeness > 1.0 - EDGE_WIDTH) objectColor.rgb = objectColor.rgb * EDGE_BRIGHTNESS;
 
     // Compute specular light.
     vec3 reflectedLightDirection = reflect(viewLightDirection, viewNormal);
@@ -154,7 +162,7 @@ GameRenderer::Model GameRenderer::blocksToModel(const std::vector<Block>& blocks
     index_offset += cube_.indices.size();
 
     // copy others unmodified
-    //m.uvs.insert(uvs_.end(), cube_uvs_.begin(), cube_uvs_.end());
+    m.uvs.insert(m.uvs.end(), cube_.uvs.begin(), cube_.uvs.end());
     m.normals.insert(m.normals.end(), cube_.normals.begin(), cube_.normals.end());
 
   }
@@ -184,7 +192,7 @@ void GameRenderer::InitializeGlContent(AAssetManager* asset_manager) {
       glGetUniformLocation(shader_program_, "u_DiffuseColor");
 
   attri_vertices_ = glGetAttribLocation(shader_program_, "a_Position");
-  //attri_uvs_ = glGetAttribLocation(shader_program_, "a_TexCoord");
+  attri_uvs_ = glGetAttribLocation(shader_program_, "a_TexCoord");
   attri_normals_ = glGetAttribLocation(shader_program_, "a_Normal");
 
   util::LoadObjFile(asset_manager, "cube.obj", &cube_.vertices, &cube_.normals, &cube_.uvs, &cube_.indices);
@@ -203,7 +211,6 @@ void GameRenderer::InitializeGlContent(AAssetManager* asset_manager) {
 }
 
 void GameRenderer::update(const Game& game, float game_scale) {
-  // TODO: vertex buffer
 
   const int nMaterials = material_colors_.size();
 
@@ -259,14 +266,14 @@ void GameRenderer::Draw(const glm::mat4& projection_mat,
     glVertexAttribPointer(attri_normals_, 3, GL_FLOAT, GL_FALSE, 0,
         model.normals.data());
 
-    //glEnableVertexAttribArray(attri_uvs_);
-    //glVertexAttribPointer(attri_uvs_, 2, GL_FLOAT, GL_FALSE, 0, uvs_.data());
+    glEnableVertexAttribArray(attri_uvs_);
+    glVertexAttribPointer(attri_uvs_, 2, GL_FLOAT, GL_FALSE, 0, model.uvs.data());
 
     glDrawElements(GL_TRIANGLES, model.indices.size(), GL_UNSIGNED_SHORT,
         model.indices.data());
 
     glDisableVertexAttribArray(attri_vertices_);
-    //glDisableVertexAttribArray(attri_uvs_);
+    glDisableVertexAttribArray(attri_uvs_);
     glDisableVertexAttribArray(attri_normals_);
   }
 
