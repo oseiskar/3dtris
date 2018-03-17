@@ -45,7 +45,8 @@ target_include_directories(hello_ar_native PRIVATE
            src/main/cpp
             ${ARCORE_INCLUDE}
             ${ANDROID_NDK}/sources/third_party/vulkan/src/libs/glm
-            src/main/cpp/game/include)
+            src/main/cpp/game/include
+            src/main/cpp/vendor)
 
 target_link_libraries(hello_ar_native
                       android
