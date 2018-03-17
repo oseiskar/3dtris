@@ -80,6 +80,46 @@ bool GameController::onFrame(uint64_t timestamp) {
   return changed;
 }
 
+void GameController::setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat4x4 model, int w, int h) {
+  screen_height = h;
+  screen_width = w;
+  projection_mat = projection;
+  view_mat = view;
+  model_mat = model;
+}
+
+void GameController::onTap(float x, float y) {
+
+  glm::vec3 touch_origin, touch_dir;
+  util::GetTouchRay(projection_mat, view_mat, x, y, screen_width, screen_height, touch_origin, touch_dir);
+  LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
+  LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
+
+  const glm::vec3 game_origin = util::GetTranslation(model_mat);
+  const float delta_height = (touch_origin - game_origin).y;
+  if (delta_height > 0 && touch_dir.y < 0) {
+    const float dist = -delta_height / touch_dir.y;
+    const glm::vec3 base_hit = dist*touch_dir + touch_origin - game_origin;
+
+    //debug_renderer_.setLines({ std::make_pair(touch_origin, base_hit + game_origin) });
+
+    const float hit_x = base_hit.x;
+    const float hit_y = -base_hit.z;
+    LOGI("hit %f %f", hit_x, hit_y);
+
+    // determine quadrant
+    if (abs(hit_x) > abs(hit_y)) {
+      moveXY(hit_x > 0 ? 1 : -1, 0);
+    } else {
+      moveXY(0, hit_y > 0 ? 1 : -1);
+    }
+  } // else no front-face ray intersection
+}
+
+void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
+
+}
+
 void GameController::moveXY(int dx, int dy) {
   changed_by_controls = changed_by_controls || game->moveXY(dx, dy);
 }

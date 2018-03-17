@@ -397,24 +397,9 @@ glm::vec3 RotateOnly(const glm::mat4x4& mat, glm::vec3 vec) {
   return GetVec3(mat*glm::vec4(vec, 0.0));
 }
 
-void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
+void GetTouchRay(const glm::mat4x4 projection_mat, const glm::mat4x4 view_mat,
                  float x, float y, int w, int h,
                  glm::vec3& origin, glm::vec3& dir) {
-
-  ArCamera* ar_camera;
-  ArFrame_acquireCamera(ar_session, ar_frame, &ar_camera);
-
-  glm::mat4 view_mat;
-  glm::mat4 projection_mat;
-  ArCamera_getViewMatrix(ar_session, ar_camera, glm::value_ptr(view_mat));
-  ArCamera_getProjectionMatrix(ar_session, ar_camera,
-      /*near=*/0.1f, /*far=*/100.f,
-      glm::value_ptr(projection_mat));
-
-  ArTrackingState camera_tracking_state;
-  ArCamera_getTrackingState(ar_session, ar_camera, &camera_tracking_state);
-  ArCamera_release(ar_camera);
-
   const float x_rel = x / w;
   const float y_rel = y / h;
 

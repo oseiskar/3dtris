@@ -304,6 +304,7 @@ void MainApplication::OnDrawFrame() {
 
   if (game_controller_.hasStarted()) {
     game_controller_.onTrackingState(true);
+    game_controller_.setScene(projection_mat, view_mat, game_model_mat_, width_, height_);
     game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
     game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_, true);
     if (!game_controller_.getGame().isOver()) {
@@ -396,35 +397,13 @@ void MainApplication::OnTouched(float x, float y) {
         });
   }
   else if (anchors.size() > 0) {
-    glm::vec3 touch_origin, touch_dir;
-    util::GetTouchRay(ar_session_, ar_frame_, x, y, width_, height_, touch_origin, touch_dir);
-    LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
-    LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
-
-    const glm::vec3 game_origin = util::GetTranslation(game_model_mat_);
-    const float delta_height = (touch_origin - game_origin).y;
-    if (delta_height > 0 && touch_dir.y < 0) {
-      const float dist = -delta_height / touch_dir.y;
-      const glm::vec3 base_hit = dist*touch_dir + touch_origin - game_origin;
-
-      //debug_renderer_.setLines({ std::make_pair(touch_origin, base_hit + game_origin) });
-
-      const float hit_x = base_hit.x;
-      const float hit_y = -base_hit.z;
-      LOGI("hit %f %f", hit_x, hit_y);
-
-      // determine quadrant
-      if (abs(hit_x) > abs(hit_y)) {
-        game_controller_.moveXY(hit_x > 0 ? 1 : -1, 0);
-      } else {
-        game_controller_.moveXY(0, hit_y > 0 ? 1 : -1);
-      }
-    } // else no front-face ray intersection
+    game_controller_.onTap(x, y);
   }
 }
 
 void MainApplication::OnScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   if (game_controller_.hasStarted()) {
-    LOGI("scroll %f %f", x2-x1, y2-y1);
+    //LOGI("scroll %f %f", x2-x1, y2-y1);
+    game_controller_.onScroll(x1, y1, x2, y2, dx, dy);
   }
 }

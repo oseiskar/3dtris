@@ -118,7 +118,7 @@ glm::vec3 GetTranslation(const glm::mat4x4& mat);
 glm::vec3 GetVec3(glm::vec4 v);
 glm::vec3 RotateOnly(const glm::mat4x4& mat, glm::vec3 vec);
 
-void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
+void GetTouchRay(const glm::mat4x4 projection_mat, const glm::mat4x4 view_mat,
                  float x, float y, int w, int h,
                  glm::vec3& origin, glm::vec3& dir);
 
