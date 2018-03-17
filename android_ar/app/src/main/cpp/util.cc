@@ -412,15 +412,17 @@ void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
   const float y_rel = y / h;
 
   const float x_ndc = (x_rel - 0.5f)*2.0f;
-  const float y_ndc = (y_rel - 0.5f)*2.0f;
+  const float y_ndc = -(y_rel - 0.5f)*2.0f;
 
-  const glm::vec4 v = glm::inverse(view_mat)
+  const glm::mat4 inv_view = glm::inverse(view_mat);
+
+  const glm::vec4 v = inv_view
                       * glm::inverse(projection_mat)
                       * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
   const glm::vec3 v3(v.x, v.y, v.z);
 
   dir = v3 / glm::length(v3);
-  origin = GetTranslation(view_mat);
+  origin = GetTranslation(inv_view);
 }
 
 }  // namespace util

@@ -123,6 +123,7 @@ HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
     : asset_manager_(asset_manager),
       game_controller_(),
       game_box_renderer_(game_controller_.getGame().getDimensions()),
+      debug_renderer_(),
       game_model_mat_(1.0f),
       game_scale_(1.0f)
 {
@@ -203,6 +204,7 @@ void HelloArApplication::OnSurfaceCreated() {
   background_renderer_.InitializeGlContent();
   game_box_renderer_.InitializeGlContent(asset_manager_);
   game_renderer_.InitializeGlContent(asset_manager_);
+  debug_renderer_.InitializeGlContent(asset_manager_);
 }
 
 void HelloArApplication::OnDisplayGeometryChanged(int display_rotation,
@@ -269,6 +271,8 @@ void HelloArApplication::OnDrawFrame() {
     LOGI("game state changed");
     game_renderer_.update(game_controller_.getGame(), game_scale_);
   }
+
+  debug_renderer_.Draw(projection_mat, view_mat);
 
   // Get light estimation value.
   ArLightEstimate* ar_light_estimate;
@@ -393,6 +397,26 @@ void HelloArApplication::OnTouched(float x, float y) {
     util::GetTouchRay(ar_session_, ar_frame_, x, y, width_, height_, touch_origin, touch_dir);
     LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
     LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
+
+    const glm::vec3 game_origin = util::GetTranslation(game_model_mat_);
+    const float delta_height = (touch_origin - game_origin).y;
+    if (delta_height > 0 && touch_dir.y < 0) {
+      const float dist = -delta_height / touch_dir.y;
+      const glm::vec3 base_hit = dist*touch_dir + touch_origin - game_origin;
+
+      //debug_renderer_.setLines({ std::make_pair(touch_origin, base_hit + game_origin) });
+
+      const float hit_x = base_hit.x;
+      const float hit_y = -base_hit.z;
+      LOGI("hit %f %f", hit_x, hit_y);
+
+      // determine quadrant
+      if (abs(hit_x) > abs(hit_y)) {
+        game_controller_.moveXY(hit_x > 0 ? 1 : -1, 0);
+      } else {
+        game_controller_.moveXY(0, hit_y > 0 ? 1 : -1);
+      }
+    } // else no front-face ray intersection
   }
 }
 

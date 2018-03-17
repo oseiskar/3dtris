@@ -33,6 +33,7 @@
 #include "glm.h"
 #include "game_box_renderer.h"
 #include "game_renderer.h"
+#include "debug_renderer.h"
 #include "util.h"
 #include "game_controller.h"
 
@@ -103,6 +104,7 @@ private:
   BackgroundRenderer background_renderer_;
   GameBoxRenderer game_box_renderer_;
   GameRenderer game_renderer_;
+  DebugRenderer debug_renderer_;
 
   glm::mat4x4 game_model_mat_;
   float game_scale_;

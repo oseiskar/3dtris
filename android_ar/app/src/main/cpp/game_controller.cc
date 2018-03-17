@@ -18,7 +18,8 @@ constexpr int64_t MAX_FRAME_TIME = static_cast<int64_t>(0.1 * 1e9);
 GameController::GameController() :
     game(buildGame(getRandomSeedFromTime())),
     state(State::WAITING_FOR_PLANE),
-    prevTimestamp(0)
+    prevTimestamp(0),
+    changed_by_controls(false)
 {}
 
 void GameController::onTrackingState(bool isTracking) {
@@ -65,15 +66,20 @@ void GameController::onBoxFound() {
 }
 
 bool GameController::onFrame(uint64_t timestamp) {
-  bool changed = false;
+  bool changed = changed_by_controls;
   if (state == State::RUNNING && !game->isOver()) {
     int64_t dt = timestamp - prevTimestamp;
     if (dt < 0) dt = 0;
     if (dt > MAX_FRAME_TIME) dt = MAX_FRAME_TIME;
     unsigned int dtMilliseconds = static_cast<unsigned int>(dt / 1000000);
 
-    changed = game->tick(dtMilliseconds);
+    changed = changed || game->tick(dtMilliseconds);
   }
+  changed_by_controls = false;
   prevTimestamp = timestamp;
   return changed;
+}
+
+void GameController::moveXY(int dx, int dy) {
+  changed_by_controls = changed_by_controls || game->moveXY(dx, dy);
 }

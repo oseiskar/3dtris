@@ -26,11 +26,15 @@ public:
   void onTrackingState(bool isTracking);
   void onBoxFound();
 
+  // controls
+  void moveXY(int dx, int dy);
+
 private:
   std::unique_ptr<Game> game;
   State state;
 
   uint64_t prevTimestamp;
+  bool changed_by_controls;
 };
 
 
