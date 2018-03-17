@@ -16,8 +16,8 @@
  * Modifications copyright (C) Otto Seiskari 2018
  */
 
-#ifndef C_ARCORE_HELLOE_AR_HELLO_AR_APPLICATION_H_
-#define C_ARCORE_HELLOE_AR_HELLO_AR_APPLICATION_H_
+#ifndef C_MAIN_APPLICATION_H_
+#define C_MAIN_APPLICATION_H_
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -37,13 +37,13 @@
 #include "util.h"
 #include "game_controller.h"
 
-// HelloArApplication handles all application logics.
-class HelloArApplication {
+// MainApplication handles all application logics.
+class MainApplication {
 public:
   // Constructor and deconstructor.
-  HelloArApplication() = default;
-  HelloArApplication(AAssetManager* asset_manager);
-  ~HelloArApplication();
+  MainApplication() = default;
+  MainApplication(AAssetManager* asset_manager);
+  ~MainApplication();
 
   // OnPause is called on the UI thread from the Activity's onPause method.
   void OnPause();
@@ -108,4 +108,4 @@ private:
   float game_scale_;
 };
 
-#endif  // C_ARCORE_HELLOE_AR_HELLO_AR_APPLICATION_H_
+#endif

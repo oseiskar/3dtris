@@ -38,9 +38,9 @@ import javax.microedition.khronos.opengles.GL10;
  * This is a simple example that shows how to create an augmented reality (AR) application using the
  * ARCore C API.
  */
-public class HelloArActivity extends AppCompatActivity
+public class MainActivity extends AppCompatActivity
     implements GLSurfaceView.Renderer, DisplayManager.DisplayListener {
-  private static final String TAG = HelloArActivity.class.getSimpleName();
+  private static final String TAG = MainActivity.class.getSimpleName();
   private static final int SNACKBAR_UPDATE_INTERVAL_MILLIS = 200; // In milliseconds.
 
   private GLSurfaceView mSurfaceView;
@@ -161,7 +161,7 @@ public class HelloArActivity extends AppCompatActivity
 
     mSnackBar =
         Snackbar.make(
-            HelloArActivity.this.findViewById(android.R.id.content),
+            MainActivity.this.findViewById(android.R.id.content),
             getSnackBarMessage(mNativeApplication),
             Snackbar.LENGTH_INDEFINITE);
     // Set the snackbar background to light transparent black color.

@@ -26,9 +26,9 @@ set_target_properties(arcore PROPERTIES IMPORTED_LOCATION
                       ${ARCORE_LIBPATH}/${ANDROID_ABI}/libarcore_sdk.so)
 
 # This is the main app library.
-add_library(hello_ar_native SHARED
+add_library(main_native SHARED
            src/main/cpp/background_renderer.cc
-           src/main/cpp/hello_ar_application.cc
+           src/main/cpp/main_application.cc
            src/main/cpp/jni_interface.cc
            src/main/cpp/game_renderer.cc
            src/main/cpp/game_box_renderer.cc
@@ -41,14 +41,14 @@ add_library(hello_ar_native SHARED
            src/main/cpp/game/src/piece.cpp
            src/main/cpp/game/src/piece-generator.cpp)
 
-target_include_directories(hello_ar_native PRIVATE
+target_include_directories(main_native PRIVATE
            src/main/cpp
             ${ARCORE_INCLUDE}
             ${ANDROID_NDK}/sources/third_party/vulkan/src/libs/glm
             src/main/cpp/game/include
             src/main/cpp/vendor)
 
-target_link_libraries(hello_ar_native
+target_link_libraries(main_native
                       android
                       log
                       GLESv2

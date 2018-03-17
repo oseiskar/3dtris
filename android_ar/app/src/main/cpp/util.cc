@@ -58,7 +58,7 @@ static GLuint LoadShader(GLenum shader_type, const char* shader_source) {
     }
 
     glGetShaderInfoLog(shader, info_len, nullptr, buf);
-    LOGE("hello_ar::util::Could not compile shader %d:\n%s\n", shader_type,
+    LOGE("3dtris_c::util::Could not compile shader %d:\n%s\n", shader_type,
          buf);
     free(buf);
     glDeleteShader(shader);
@@ -82,9 +82,9 @@ GLuint CreateProgram(const char* vertex_source, const char* fragment_source) {
   GLuint program = glCreateProgram();
   if (program) {
     glAttachShader(program, vertexShader);
-    CheckGlError("hello_ar::util::glAttachShader");
+    CheckGlError("3dtris_c::util::glAttachShader");
     glAttachShader(program, fragment_shader);
-    CheckGlError("hello_ar::util::glAttachShader");
+    CheckGlError("3dtris_c::util::glAttachShader");
     glLinkProgram(program);
     GLint link_status = GL_FALSE;
     glGetProgramiv(program, GL_LINK_STATUS, &link_status);
@@ -95,7 +95,7 @@ GLuint CreateProgram(const char* vertex_source, const char* fragment_source) {
         char* buf = reinterpret_cast<char*>(malloc(buf_length));
         if (buf) {
           glGetProgramInfoLog(program, buf_length, nullptr, buf);
-          LOGE("hello_ar::util::Could not link program:\n%s\n", buf);
+          LOGE("3dtris_c::util::Could not link program:\n%s\n", buf);
           free(buf);
         }
       }
@@ -134,7 +134,7 @@ bool LoadPngFromAssetManager(int target, const std::string& path) {
           helper_class, kLoadTextureMethodName, kLoadTextureMethodSignature);
       return {helper_class, load_image_method, load_texture_method};
     }
-    LOGE("hello_ar::util::Could not find Java helper class %s",
+    LOGE("3dtris_c::util::Could not find Java helper class %s",
          kHelperClassName);
     return {};
   }();

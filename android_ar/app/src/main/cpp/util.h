@@ -16,8 +16,8 @@
  * Modifications copyright (C) Otto Seiskari 2018
  */
 
-#ifndef C_ARCORE_HELLOE_AR_UTIL_H_
-#define C_ARCORE_HELLOE_AR_UTIL_H_
+#ifndef C_UTIL_H_
+#define C_UTIL_H_
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -34,12 +34,12 @@
 
 #ifndef LOGI
 #define LOGI(...) \
-  __android_log_print(ANDROID_LOG_INFO, "hello_ar_example_c", __VA_ARGS__)
+  __android_log_print(ANDROID_LOG_INFO, "3dtris_c", __VA_ARGS__)
 #endif  // LOGI
 
 #ifndef LOGE
 #define LOGE(...) \
-  __android_log_print(ANDROID_LOG_ERROR, "hello_ar_example_c", __VA_ARGS__)
+  __android_log_print(ANDROID_LOG_ERROR, "3dtris_c", __VA_ARGS__)
 #endif  // LOGE
 
 #ifndef CHECK
@@ -50,7 +50,6 @@
   }
 #endif  // CHECK
 
-// Utilities for C hello AR project.
 namespace util {
 
 // Provides a scoped allocated instance of Anchor.
@@ -123,4 +122,4 @@ void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
 
 }  // namespace util
 
-#endif  // C_ARCORE_HELLOE_AR_UTIL_H_
+#endif

@@ -20,7 +20,7 @@
 #include <android/asset_manager_jni.h>
 #include <jni.h>
 
-#include "hello_ar_application.h"
+#include "main_application.h"
 
 #define JNI_METHOD(return_type, method_name) \
   JNIEXPORT return_type JNICALL              \
@@ -32,12 +32,12 @@ namespace {
 // maintain a reference to the JVM so we can use it later.
 static JavaVM *g_vm = nullptr;
 
-inline jlong jptr(HelloArApplication *native_hello_ar_application) {
-  return reinterpret_cast<intptr_t>(native_hello_ar_application);
+inline jlong jptr(MainApplication *native_application) {
+  return reinterpret_cast<intptr_t>(native_application);
 }
 
-inline HelloArApplication *native(jlong ptr) {
-  return reinterpret_cast<HelloArApplication *>(ptr);
+inline MainApplication *native(jlong ptr) {
+  return reinterpret_cast<MainApplication *>(ptr);
 }
 
 }  // namespace
@@ -50,7 +50,7 @@ jint JNI_OnLoad(JavaVM *vm, void *) {
 JNI_METHOD(jlong, createNativeApplication)
 (JNIEnv *env, jclass, jobject j_asset_manager) {
   AAssetManager *asset_manager = AAssetManager_fromJava(env, j_asset_manager);
-  return jptr(new HelloArApplication(asset_manager));
+  return jptr(new MainApplication(asset_manager));
 }
 
 JNI_METHOD(void, destroyNativeApplication)

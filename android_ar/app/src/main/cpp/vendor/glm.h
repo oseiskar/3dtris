@@ -12,9 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications copyright (C) Otto Seiskari 2018
  */
-#ifndef C_ARCORE_HELLOE_AR_GLM_H_
-#define C_ARCORE_HELLOE_AR_GLM_H_
+#ifndef C_AR_GLM_H_
+#define C_AR_GLM_H_
 
 #define GLM_FORCE_RADIANS 1
 #include "glm.hpp"

@@ -16,7 +16,7 @@
  * Modifications copyright (C) Otto Seiskari 2018
  */
 
-#include "hello_ar_application.h"
+#include "main_application.h"
 
 #include <android/asset_manager.h>
 #include <time.h>
@@ -51,7 +51,7 @@ void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool p
       ArHitResultList_getItem(ar_session_, hit_result_list, i, ar_hit);
 
       if (ar_hit == nullptr) {
-        LOGE("HelloArApplication::OnTouched ArHitResultList_getItem error");
+        LOGE("MainApplication::OnTouched ArHitResultList_getItem error");
         return;
       }
 
@@ -92,7 +92,7 @@ void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool p
       if (ArHitResult_acquireNewAnchor(ar_session_, ar_hit_result, &anchor) !=
           AR_SUCCESS) {
         LOGE(
-            "HelloArApplication::OnTouched ArHitResult_acquireNewAnchor error");
+            "MainApplication::OnTouched ArHitResult_acquireNewAnchor error");
         return;
       }
 
@@ -118,7 +118,7 @@ void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool p
 
 }  // namespace
 
-HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
+MainApplication::MainApplication(AAssetManager* asset_manager)
     : asset_manager_(asset_manager),
       game_controller_(),
       game_box_renderer_(game_controller_.getGame().getDimensions()),
@@ -129,21 +129,21 @@ HelloArApplication::HelloArApplication(AAssetManager* asset_manager)
   LOGI("OnCreate()");
 }
 
-HelloArApplication::~HelloArApplication() {
+MainApplication::~MainApplication() {
   if (ar_session_ != nullptr) {
     ArSession_destroy(ar_session_);
     ArFrame_destroy(ar_frame_);
   }
 }
 
-void HelloArApplication::OnPause() {
+void MainApplication::OnPause() {
   LOGI("OnPause()");
   if (ar_session_ != nullptr) {
     ArSession_pause(ar_session_);
   }
 }
 
-void HelloArApplication::OnResume(void* env, void* context, void* activity) {
+void MainApplication::OnResume(void* env, void* context, void* activity) {
   LOGI("OnResume()");
 
   if (ar_session_ == nullptr) {
@@ -197,7 +197,7 @@ void HelloArApplication::OnResume(void* env, void* context, void* activity) {
   CHECK(status == AR_SUCCESS);
 }
 
-void HelloArApplication::OnSurfaceCreated() {
+void MainApplication::OnSurfaceCreated() {
   LOGI("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
@@ -206,7 +206,7 @@ void HelloArApplication::OnSurfaceCreated() {
   debug_renderer_.InitializeGlContent(asset_manager_);
 }
 
-void HelloArApplication::OnDisplayGeometryChanged(int display_rotation,
+void MainApplication::OnDisplayGeometryChanged(int display_rotation,
                                                   int width, int height) {
   LOGI("OnSurfaceChanged(%d, %d)", width, height);
   glViewport(0, 0, width, height);
@@ -218,7 +218,7 @@ void HelloArApplication::OnDisplayGeometryChanged(int display_rotation,
   }
 }
 
-void HelloArApplication::OnDrawFrame() {
+void MainApplication::OnDrawFrame() {
   // Render the scene.
   glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -238,7 +238,7 @@ void HelloArApplication::OnDrawFrame() {
 
   // Update session to get current frame and render camera background.
   if (ArSession_update(ar_session_, ar_frame_) != AR_SUCCESS) {
-    LOGE("HelloArApplication::OnDrawFrame ArSession_update error");
+    LOGE("MainApplication::OnDrawFrame ArSession_update error");
   }
 
   ArCamera* ar_camera;
@@ -373,7 +373,7 @@ void HelloArApplication::OnDrawFrame() {
   }
 }
 
-void HelloArApplication::OnTouched(float x, float y) {
+void MainApplication::OnTouched(float x, float y) {
   std::vector<ArAnchor*>& anchors = tracked_obj_set_;
   GameController& controller = game_controller_;
 

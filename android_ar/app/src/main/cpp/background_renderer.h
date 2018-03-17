@@ -16,8 +16,8 @@
  * Modifications copyright (C) Otto Seiskari 2018
  */
 
-#ifndef C_ARCORE_HELLOE_AR_BACKGROUND_RENDERER_H_
-#define C_ARCORE_HELLOE_AR_BACKGROUND_RENDERER_H_
+#ifndef C_BACKGROUND_RENDERER_H_
+#define C_BACKGROUND_RENDERER_H_
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

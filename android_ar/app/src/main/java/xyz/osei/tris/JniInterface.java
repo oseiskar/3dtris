@@ -7,7 +7,7 @@ import android.content.res.AssetManager;
 /** JNI interface to native layer. */
 public class JniInterface {
   static {
-    System.loadLibrary("hello_ar_native");
+    System.loadLibrary("main_native");
   }
 
   static AssetManager assetManager;
