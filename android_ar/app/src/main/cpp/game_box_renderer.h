@@ -20,9 +20,7 @@ public:
   GameBoxRenderer(Pos3d dimensions);
   ~GameBoxRenderer() = default;
 
-  // Sets up OpenGL state used by the plane renderer.  Must be called on the
-  // OpenGL thread.
-  void InitializeGlContent(AAssetManager* asset_manager);
+  void InitializeGlContent();
 
   // Draws the provided plane.
   void Draw(const glm::mat4& projection_mat,
@@ -49,5 +47,8 @@ private:
   GLuint uniform_mv_mat_;
   GLuint uniform_color_;
 };
+
+extern const char *LINE_VERTEX_SHADER;
+extern const char *LINE_FRAGMENT_SHADER;
 
 #endif

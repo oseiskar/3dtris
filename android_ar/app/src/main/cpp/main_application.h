@@ -33,6 +33,7 @@
 #include "glm.h"
 #include "game_box_renderer.h"
 #include "game_renderer.h"
+#include "control_renderer.h"
 #include "debug_renderer.h"
 #include "util.h"
 #include "game_controller.h"
@@ -71,6 +72,8 @@ public:
   // @param y: y position on the screen (pixels).
   void OnTouched(float x, float y);
 
+  void OnScroll(float x1, float y1, float x2, float y2, float dx, float dy);
+
   // Returns true if any planes have been detected.  Used for hiding the
   // "searching for planes" snackbar.
   bool IsTracking() const {
@@ -102,6 +105,7 @@ private:
   BackgroundRenderer background_renderer_;
   GameBoxRenderer game_box_renderer_;
   GameRenderer game_renderer_;
+  ControlRenderer control_renderer_;
   DebugRenderer debug_renderer_;
 
   glm::mat4x4 game_model_mat_;

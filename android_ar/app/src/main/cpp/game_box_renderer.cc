@@ -3,35 +3,35 @@
 #include "game_renderer.h" // GAME_MODEL_TRANSFORM
 #include "util.h"
 
+const char *LINE_VERTEX_SHADER = R"(
+precision highp float;
+precision highp int;
+
+uniform mat4 u_ModelViewProjection;
+attribute vec4 a_Position;
+
+void main() {
+  gl_Position = u_ModelViewProjection * vec4(a_Position.xyz, 1.0);
+})";
+
+const char *LINE_FRAGMENT_SHADER = R"(
+precision highp float;
+precision highp int;
+uniform vec4 u_Color;
+
+void main() {
+    gl_FragColor = u_Color;
+})";
+
 namespace {
-  constexpr char kVertexShader[] = R"(
-  precision highp float;
-  precision highp int;
-
-  uniform mat4 u_ModelViewProjection;
-  attribute vec4 a_Position;
-
-  void main() {
-     gl_Position = u_ModelViewProjection * vec4(a_Position.xyz, 1.0);
-  })";
-
-  constexpr char kFragmentShader[] = R"(
-  precision highp float;
-  precision highp int;
-  uniform vec4 u_Color;
-
-  void main() {
-      gl_FragColor = u_Color;
-  })";
-
   const glm::vec4 STARTED_COLOR = {1.0f, 1.0f, 1.0f, 0.2f};
   const glm::vec4 NOT_STARTED_COLOR = {0.7f, 0.7f, 1.0f, 0.6f};
-}  // namespace
+}
 
 GameBoxRenderer::GameBoxRenderer(Pos3d dims) : dimensions(dims) {}
 
-void GameBoxRenderer::InitializeGlContent(AAssetManager* asset_manager) {
-  shader_program_ = util::CreateProgram(kVertexShader, kFragmentShader);
+void GameBoxRenderer::InitializeGlContent() {
+  shader_program_ = util::CreateProgram(LINE_VERTEX_SHADER, LINE_FRAGMENT_SHADER);
   util::CheckGlError("GameBoxRenderer::InitializeGlContent() - create program");
 
   if (!shader_program_) {

@@ -91,6 +91,11 @@ JNI_METHOD(void, onTouched)
   native(native_application)->OnTouched(x, y);
 }
 
+JNI_METHOD(void, onScroll)
+(JNIEnv *, jclass, jlong native_application, jfloat x1, jfloat y1, jfloat x2, jfloat y2, jfloat dx, jfloat dy) {
+  native(native_application)->OnScroll(x1, y1, x2, y2, dx, dy);
+}
+
 JNI_METHOD(jboolean, isTracking)
 (JNIEnv *, jclass, jlong native_application) {
   return static_cast<jboolean>(

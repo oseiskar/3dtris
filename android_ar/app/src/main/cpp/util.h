@@ -115,6 +115,8 @@ void GetTransformMatrixFromAnchor(ArSession* ar_session,
                                   glm::mat4* out_model_mat);
 
 glm::vec3 GetTranslation(const glm::mat4x4& mat);
+glm::vec3 GetVec3(glm::vec4 v);
+glm::vec3 RotateOnly(const glm::mat4x4& mat, glm::vec3 vec);
 
 void GetTouchRay(ArSession* ar_session, ArFrame* ar_frame,
                  float x, float y, int w, int h,

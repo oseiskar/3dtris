@@ -127,7 +127,7 @@ constexpr std::array<uint32_t, kBlockColorRgbaSize> kBlockColorRgba = {{
    0x2196F3FF, 0x03A9F4FF, 0x00BCD4FF, 0x009688FF, 0x4CAF50FF, 0x8BC34AFF,
    0xCDDC39FF, 0xFFEB3BFF, 0xFFC107FF, 0xFF9800FF }};
 
-constexpr float COLOR_LIGHTNESS = 0.7;
+constexpr float COLOR_LIGHTNESS = 1.0;
 
 inline glm::vec3 GetBlockColor(int i) {
   const int32_t colorRgba = kBlockColorRgba[i % kBlockColorRgbaSize];
@@ -254,7 +254,7 @@ void GameRenderer::Draw(const glm::mat4& projection_mat,
       continue;
     }
 
-    const glm::vec3 color = material_colors_[i];
+    const glm::vec3 color = material_colors_[i] * light_intensity;
 
     glUniform3f(uniform_diffuse_color_, color.x, color.y, color.z);
 

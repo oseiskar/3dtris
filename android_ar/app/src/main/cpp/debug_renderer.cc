@@ -1,34 +1,15 @@
 #include "debug_renderer.h"
+#include "game_box_renderer.h"
 #include "util.h"
 
 namespace {
-  constexpr char kVertexShader[] = R"(
-  precision highp float;
-  precision highp int;
-
-  uniform mat4 u_ModelViewProjection;
-  attribute vec4 a_Position;
-
-  void main() {
-     gl_Position = u_ModelViewProjection * vec4(a_Position.xyz, 1.0);
-  })";
-
-  constexpr char kFragmentShader[] = R"(
-  precision highp float;
-  precision highp int;
-  uniform vec4 u_Color;
-
-  void main() {
-      gl_FragColor = u_Color;
-  })";
-
   const glm::vec4 kColor = {1.0f, 0.0f, 0.0f, 0.5f};
 }  // namespace
 
 DebugRenderer::DebugRenderer() {}
 
-void DebugRenderer::InitializeGlContent(AAssetManager* asset_manager) {
-  shader_program_ = util::CreateProgram(kVertexShader, kFragmentShader);
+void DebugRenderer::InitializeGlContent() {
+  shader_program_ = util::CreateProgram(LINE_VERTEX_SHADER, LINE_FRAGMENT_SHADER);
   util::CheckGlError("GameBoxRenderer::InitializeGlContent() - create program");
 
   if (!shader_program_) {
@@ -64,6 +45,10 @@ void DebugRenderer::Draw(const glm::mat4& projection_mat,
                            const glm::mat4& view_mat) {
   if (!shader_program_) {
     LOGE("shader_program is null.");
+    return;
+  }
+
+  if (vertices_.size() == 0) {
     return;
   }
 

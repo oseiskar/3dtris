@@ -120,6 +120,39 @@ public class MainActivity extends AppCompatActivity
               }
 
               @Override
+              public boolean onDoubleTapEvent(final MotionEvent e) {
+                if(e.getAction() != MotionEvent.ACTION_UP) {
+                  return false;  // Don't do anything for other actions
+                }
+
+                mSurfaceView.queueEvent(
+                        new Runnable() {
+                          @Override
+                          public void run() {
+                            JniInterface.onTouched(mNativeApplication, e.getX(), e.getY());
+                          }
+                        });
+                return true;
+              }
+
+              @Override
+              public boolean onScroll(final MotionEvent e1,
+                                      final MotionEvent e2,
+                                      final float dx, final float dy) {
+                mSurfaceView.queueEvent(
+                        new Runnable() {
+                          @Override
+                          public void run() {
+                            JniInterface.onScroll(mNativeApplication,
+                                    e1.getX(), e1.getY(),
+                                    e2.getX(), e2.getY(),
+                                    dx, dy);
+                          }
+                        });
+                return true;
+              }
+
+              @Override
               public boolean onDown(MotionEvent e) {
                 return true;
               }
@@ -136,7 +169,7 @@ public class MainActivity extends AppCompatActivity
     // Set up renderer.
     mSurfaceView.setPreserveEGLContextOnPause(true);
     mSurfaceView.setEGLContextClientVersion(2);
-    mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
+    mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
     mSurfaceView.setRenderer(this);
     mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 

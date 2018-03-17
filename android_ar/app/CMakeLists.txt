@@ -33,6 +33,7 @@ add_library(main_native SHARED
            src/main/cpp/game_renderer.cc
            src/main/cpp/game_box_renderer.cc
            src/main/cpp/debug_renderer.cc
+           src/main/cpp/control_renderer.cc
            src/main/cpp/util.cc
            src/main/cpp/game_controller.cc
            src/main/cpp/game/src/game.cpp

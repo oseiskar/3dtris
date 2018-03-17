@@ -122,6 +122,7 @@ MainApplication::MainApplication(AAssetManager* asset_manager)
     : asset_manager_(asset_manager),
       game_controller_(),
       game_box_renderer_(game_controller_.getGame().getDimensions()),
+      control_renderer_(),
       debug_renderer_(),
       game_model_mat_(1.0f),
       game_scale_(1.0f)
@@ -201,9 +202,10 @@ void MainApplication::OnSurfaceCreated() {
   LOGI("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
-  game_box_renderer_.InitializeGlContent(asset_manager_);
+  game_box_renderer_.InitializeGlContent();
   game_renderer_.InitializeGlContent(asset_manager_);
-  debug_renderer_.InitializeGlContent(asset_manager_);
+  control_renderer_.InitializeGlContent();
+  debug_renderer_.InitializeGlContent();
 }
 
 void MainApplication::OnDisplayGeometryChanged(int display_rotation,
@@ -302,8 +304,11 @@ void MainApplication::OnDrawFrame() {
 
   if (game_controller_.hasStarted()) {
     game_controller_.onTrackingState(true);
-    game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_, true);
     game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
+    game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_, true);
+    if (!game_controller_.getGame().isOver()) {
+      control_renderer_.Draw(projection_mat, view_mat, game_model_mat_);
+    }
   }
   else {
 
@@ -379,7 +384,6 @@ void MainApplication::OnTouched(float x, float y) {
 
   if (game_controller_.getState() == GameController::State::WAITING_FOR_BOX) {
 
-
     getHit(ar_session_, ar_frame_, /*x, y,*/ 0.5f*width_, 0.5f*height_, false,
         [&anchors, &controller](ArAnchor* anchor){
           if (anchors.size() >= kMaxAnchors) {
@@ -416,5 +420,11 @@ void MainApplication::OnTouched(float x, float y) {
         game_controller_.moveXY(0, hit_y > 0 ? 1 : -1);
       }
     } // else no front-face ray intersection
+  }
+}
+
+void MainApplication::OnScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
+  if (game_controller_.hasStarted()) {
+    LOGI("scroll %f %f", x2-x1, y2-y1);
   }
 }

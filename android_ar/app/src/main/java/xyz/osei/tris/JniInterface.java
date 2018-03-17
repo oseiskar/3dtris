@@ -36,6 +36,11 @@ public class JniInterface {
   /** OnTouch event, called on the OpenGL thread. */
   public static native void onTouched(long nativeApplication, float x, float y);
 
+  public static native void onScroll(long nativeApplication,
+                                     float x1, float y1,
+                                     float x2, float y2,
+                                     float dx, float dy);
+
   public static native boolean isTracking(long nativeApplication);
   public static native boolean gameStarted(long nativeApplication);
   public static native boolean gameOver(long nativeApplication);
