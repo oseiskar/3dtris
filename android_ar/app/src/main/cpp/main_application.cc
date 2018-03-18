@@ -51,7 +51,7 @@ void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool p
       ArHitResultList_getItem(ar_session_, hit_result_list, i, ar_hit);
 
       if (ar_hit == nullptr) {
-        LOGE("MainApplication::OnTouched ArHitResultList_getItem error");
+        LOGE("MainApplication::OnTap ArHitResultList_getItem error");
         return;
       }
 
@@ -92,7 +92,7 @@ void getHit(ArSession *ar_session_, ArFrame *ar_frame_, float x, float y, bool p
       if (ArHitResult_acquireNewAnchor(ar_session_, ar_hit_result, &anchor) !=
           AR_SUCCESS) {
         LOGE(
-            "MainApplication::OnTouched ArHitResult_acquireNewAnchor error");
+            "MainApplication::OnTap ArHitResult_acquireNewAnchor error");
         return;
       }
 
@@ -379,7 +379,7 @@ void MainApplication::OnDrawFrame() {
   }
 }
 
-void MainApplication::OnTouched(float x, float y) {
+void MainApplication::OnTap(float x, float y) {
   std::vector<ArAnchor*>& anchors = tracked_obj_set_;
   GameController& controller = game_controller_;
 
@@ -401,9 +401,20 @@ void MainApplication::OnTouched(float x, float y) {
   }
 }
 
+void MainApplication::OnTouchUp(float x, float y) {
+  if (game_controller_.hasStarted()) {
+    //LOGI("fling %f %f", x2-x1, y2-y1);
+    game_controller_.onTouchUp(x, y);
+  }
+}
+
 void MainApplication::OnScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   if (game_controller_.hasStarted()) {
     //LOGI("scroll %f %f", x2-x1, y2-y1);
     game_controller_.onScroll(x1, y1, x2, y2, dx, dy);
   }
+}
+
+void MainApplication::OnFling(float x1, float y1, float x2, float y2, float vx, float vy) {
+  //LOGI("fling %f %f", x2-x1, y2-y1);
 }

@@ -32,18 +32,24 @@ namespace {
       }
     };
 
-    for (auto gimbal : controller.getGimbals()) {
+    auto makeGimbal = [makeArc](const GameController::GimbalControl& gimbal) {
       makeArc(gimbal.origin, gimbal.r, gimbal.u);
       makeArc(gimbal.origin, gimbal.r, gimbal.v);
       makeArc(gimbal.origin, gimbal.r, -gimbal.u);
       makeArc(gimbal.origin, gimbal.r, -gimbal.v);
+    };
+
+    if (controller.hasActiveGimbal()) {
+      makeGimbal(controller.getActiveGimbal());
+    } else {
+      for (auto gimbal : controller.getGimbals()) {
+        makeGimbal(gimbal);
+      }
     }
 
     return lines;
-  }
-}  // namespace
-
-
+  };
+}
 
 ControlRenderer::ControlRenderer(const GameController& controller): controller_(controller) {}
 

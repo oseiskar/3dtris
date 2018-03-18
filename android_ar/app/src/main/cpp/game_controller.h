@@ -31,6 +31,7 @@ public:
   void setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat4x4 model, int w, int h);
   void onTap(float x, float y);
   void onScroll(float x1, float y1, float x2, float y2, float dx, float dy);
+  void onTouchUp(float x, float y);
 
   struct GimbalControl {
     glm::vec3 origin;
@@ -43,6 +44,12 @@ public:
     return gimbals;
   };
 
+  bool hasActiveGimbal() const {
+    return active_gimbal_index >= 0;
+  }
+
+  GimbalControl getActiveGimbal() const;
+
 private:
   std::unique_ptr<Game> game;
   State state;
@@ -54,12 +61,16 @@ private:
   int screen_width, screen_height;
 
   std::array<GimbalControl, 3> gimbals;
-  int active_gimbal;
+  int active_gimbal_index;
+  float active_v_dist = 0, active_u_dist = 0;
+  GimbalControl active_gimbal;
 
   void setGimbals();
+  glm::vec2 ndcToScreen(glm::vec2 ndc) const;
 
   // controls
   void moveXY(int dx, int dy);
+  void rotate(Axis ax, RotationDirection dir);
 };
 
 

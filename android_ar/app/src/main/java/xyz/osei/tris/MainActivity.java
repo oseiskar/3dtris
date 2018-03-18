@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity
                     new Runnable() {
                       @Override
                       public void run() {
-                        JniInterface.onTouched(mNativeApplication, e.getX(), e.getY());
+                        JniInterface.OnTap(mNativeApplication, e.getX(), e.getY());
                       }
                     });
                 return true;
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity
                         new Runnable() {
                           @Override
                           public void run() {
-                            JniInterface.onTouched(mNativeApplication, e.getX(), e.getY());
+                            JniInterface.OnTap(mNativeApplication, e.getX(), e.getY());
                           }
                         });
                 return true;
@@ -153,6 +153,23 @@ public class MainActivity extends AppCompatActivity
               }
 
               @Override
+              public boolean onFling(final MotionEvent e1,
+                                     final MotionEvent e2,
+                                     final float vx, final float vy) {
+                mSurfaceView.queueEvent(
+                        new Runnable() {
+                          @Override
+                          public void run() {
+                            JniInterface.onFling(mNativeApplication,
+                                    e1.getX(), e1.getY(),
+                                    e2.getX(), e2.getY(),
+                                    vx, vy);
+                          }
+                        });
+                return true;
+              }
+
+              @Override
               public boolean onDown(MotionEvent e) {
                 return true;
               }
@@ -161,9 +178,22 @@ public class MainActivity extends AppCompatActivity
     mSurfaceView.setOnTouchListener(
         new View.OnTouchListener() {
           @Override
-          public boolean onTouch(View v, MotionEvent event) {
+          public boolean onTouch(View v, final MotionEvent event) {
+
+            // deliver lower-level touch up events separately to handle scroll stops
+            if(event.getAction() == MotionEvent.ACTION_UP) {
+              mSurfaceView.queueEvent(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                JniInterface.onTouchUp(mNativeApplication,
+                                        event.getX(), event.getY());
+                            }
+                        });
+            }
             return mGestureDetector.onTouchEvent(event);
           }
+
         });
 
     // Set up renderer.

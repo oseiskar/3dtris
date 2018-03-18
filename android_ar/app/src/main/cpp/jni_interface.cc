@@ -86,14 +86,24 @@ JNI_METHOD(void, onGlSurfaceDrawFrame)
   native(native_application)->OnDrawFrame();
 }
 
-JNI_METHOD(void, onTouched)
+JNI_METHOD(void, OnTap)
 (JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
-  native(native_application)->OnTouched(x, y);
+  native(native_application)->OnTap(x, y);
+}
+
+JNI_METHOD(void, onTouchUp)
+(JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
+  native(native_application)->OnTouchUp(x, y);
 }
 
 JNI_METHOD(void, onScroll)
 (JNIEnv *, jclass, jlong native_application, jfloat x1, jfloat y1, jfloat x2, jfloat y2, jfloat dx, jfloat dy) {
   native(native_application)->OnScroll(x1, y1, x2, y2, dx, dy);
+}
+
+JNI_METHOD(void, onFling)
+(JNIEnv *, jclass, jlong native_application, jfloat x1, jfloat y1, jfloat x2, jfloat y2, jfloat vx, jfloat vy) {
+  native(native_application)->OnFling(x1, y1, x2, y2, vx, vy);
 }
 
 JNI_METHOD(jboolean, isTracking)
