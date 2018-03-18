@@ -2,6 +2,7 @@
 #ifndef C_GAME_CONTROLLER_H_
 #define C_GAME_CONTROLLER_H_
 
+#include <array>
 #include <glm.h>
 #include "api.hpp"
 
@@ -31,6 +32,17 @@ public:
   void onTap(float x, float y);
   void onScroll(float x1, float y1, float x2, float y2, float dx, float dy);
 
+  struct GimbalControl {
+    glm::vec3 origin;
+    glm::vec3 r, u, v;
+    Axis u_axis, v_axis;
+    glm::vec2 r_screen, u_screen, v_screen;
+  };
+
+  const std::array<GimbalControl, 3> &getGimbals() const {
+    return gimbals;
+  };
+
 private:
   std::unique_ptr<Game> game;
   State state;
@@ -40,6 +52,11 @@ private:
 
   glm::mat4x4 projection_mat, view_mat, model_mat;
   int screen_width, screen_height;
+
+  std::array<GimbalControl, 3> gimbals;
+  int active_gimbal;
+
+  void setGimbals();
 
   // controls
   void moveXY(int dx, int dy);

@@ -122,7 +122,7 @@ MainApplication::MainApplication(AAssetManager* asset_manager)
     : asset_manager_(asset_manager),
       game_controller_(),
       game_box_renderer_(game_controller_.getGame().getDimensions()),
-      control_renderer_(),
+      control_renderer_(game_controller_),
       debug_renderer_(),
       game_model_mat_(1.0f),
       game_scale_(1.0f)

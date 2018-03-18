@@ -12,6 +12,17 @@ inline static unsigned int getRandomSeedFromTime() {
   return static_cast<unsigned int>(res.tv_nsec ^ res.tv_sec);
 }
 
+static glm::vec3 axisToVec(Axis ax) {
+  switch (ax) {
+    case Axis::X:
+      return glm::vec3(1,0,0);
+    case Axis::Y:
+      return glm::vec3(0,1,0);
+    case Axis::Z:
+      return glm::vec3(0,0,1);
+  }
+}
+
 constexpr int64_t MAX_FRAME_TIME = static_cast<int64_t>(0.1 * 1e9);
 }
 
@@ -86,6 +97,65 @@ void GameController::setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat
   projection_mat = projection;
   view_mat = view;
   model_mat = model;
+
+  setGimbals();
+}
+
+void GameController::setGimbals() {
+
+  // gimbal sphere position
+  const float x_ndc = 0.0;
+  const float y_ndc = -0.7;
+
+  const glm::mat4 inv_view = glm::inverse(view_mat);
+  const glm::vec4 v = inv_view
+                      * glm::inverse(projection_mat)
+                      * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
+  const glm::vec3 dir = glm::normalize(glm::vec3(v.x, v.y, v.z));
+  const glm::vec3 origin = util::GetTranslation(inv_view);
+
+  const float distance = 0.4;
+
+  const glm::vec3 gimbal_origin = origin + dir*distance;
+  const glm::mat4x4 model_mat = this->model_mat;
+
+  auto make_gimbal = [gimbal_origin, model_mat](
+      Axis axis,
+      int dir) {
+    constexpr float r = 0.05;
+
+    GimbalControl g;
+    switch (axis) {
+      case Axis::X:
+        g.u_axis = Axis::Y;
+        g.v_axis = Axis::Z;
+        break;
+      case Axis::Y:
+        g.u_axis = Axis::X;
+        g.v_axis = Axis::Z;
+        break;
+      case Axis::Z:
+        g.u_axis = Axis::X;
+        g.v_axis = Axis::Y;
+        break;
+    }
+
+    glm::vec3 r0 = (float)dir*axisToVec(axis);
+    glm::vec3 u0 = glm::cross(axisToVec(g.u_axis), r0);
+    glm::vec3 v0 = glm::cross(axisToVec(g.v_axis), r0);
+
+    g.origin = gimbal_origin;
+    g.r = util::RotateOnly(model_mat, r*r0);
+    g.u = util::RotateOnly(model_mat, r*u0);
+    g.v = util::RotateOnly(model_mat, r*v0);
+    return g;
+  };
+
+  gimbals[0] = make_gimbal(Axis::X, -1);
+  gimbals[1] = make_gimbal(Axis::Y, 1);
+  gimbals[2] = make_gimbal(Axis::Z, 1);
+
+  active_gimbal = 0;
 }
 
 void GameController::onTap(float x, float y) {

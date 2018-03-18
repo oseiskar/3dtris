@@ -14,10 +14,11 @@
 #include "arcore_c_api.h"
 #include "glm.h"
 #include "api.hpp"
+#include "game_controller.h"
 
 class ControlRenderer {
 public:
-  ControlRenderer() = default;
+  ControlRenderer(const GameController& controller);
   ~ControlRenderer() = default;
 
   void InitializeGlContent();
@@ -27,11 +28,9 @@ public:
             const glm::mat4& model_mat);
 
 private:
-  void drawGimbal(const glm::mat4& projection_mat,
-                  const glm::mat4& view_mat,
-                  const glm::mat4& model_mat);
-
   void setLines(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines);
+
+  const GameController &controller_;
 
   std::vector<GLfloat> vertices_;
   std::vector<GLushort> indices_;
