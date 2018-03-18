@@ -5,7 +5,8 @@
 namespace {
   const glm::vec4 kColor = {1.0f, 1.0f, 1.0f, 0.5f};
 
-  std::vector< std::pair<glm::vec3, glm::vec3> > drawGimbal(const GameController &controller) {
+  std::vector< std::pair<glm::vec3, glm::vec3> > drawRotationAnchors(
+      const GameController &controller) {
 
     std::vector< std::pair<glm::vec3, glm::vec3> > lines;
 
@@ -32,17 +33,17 @@ namespace {
       }
     };
 
-    auto makeGimbal = [makeArc](const GameController::GimbalControl& gimbal) {
+    auto makeGimbal = [makeArc](const GameController::RotationAnchor& gimbal) {
       for (auto arc : gimbal.arcs) {
         makeArc(gimbal.origin, gimbal.r, arc.dir);
         makeArc(gimbal.origin, gimbal.r, -arc.dir);
       }
     };
 
-    if (controller.hasActiveGimbal()) {
-      makeGimbal(controller.getActiveGimbal());
+    if (controller.hasActiveRotationAnchor()) {
+      makeGimbal(controller.getActiveRotationAnchor());
     } else {
-      for (auto gimbal : controller.getGimbals()) {
+      for (auto gimbal : controller.getRotationAnchors()) {
         makeGimbal(gimbal);
       }
     }
@@ -94,7 +95,7 @@ void ControlRenderer::Draw(const glm::mat4& projection_mat,
     return;
   }
 
-  setLines(drawGimbal(controller_));
+  setLines(drawRotationAnchors(controller_));
 
   glUseProgram(shader_program_);
   glDepthMask(GL_FALSE);

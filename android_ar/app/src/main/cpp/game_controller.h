@@ -33,7 +33,7 @@ public:
   void onScroll(float x1, float y1, float x2, float y2, float dx, float dy);
   void onTouchUp(float x, float y);
 
-  struct GimbalControl {
+  struct RotationAnchor {
     glm::vec3 origin;
     glm::vec3 r;
     glm::vec2 r_screen;
@@ -47,15 +47,15 @@ public:
     std::vector<Arc> arcs;
   };
 
-  const std::array<GimbalControl, 2> &getGimbals() const {
-    return gimbals;
+  const std::array<RotationAnchor, 2> &getRotationAnchors() const {
+    return rotation_anchors;
   };
 
-  bool hasActiveGimbal() const {
-    return active_gimbal_index >= 0;
+  bool hasActiveRotationAnchor() const {
+    return active_anchor_index >= 0;
   }
 
-  GimbalControl getActiveGimbal() const;
+  RotationAnchor getActiveRotationAnchor() const;
 
 private:
   std::unique_ptr<Game> game;
@@ -67,12 +67,12 @@ private:
   glm::mat4x4 projection_mat, view_mat, model_mat;
   int screen_width, screen_height;
 
-  std::array<GimbalControl, 2> gimbals;
-  int active_gimbal_index;
-  GimbalControl active_gimbal;
+  std::array<RotationAnchor, 2> rotation_anchors;
+  int active_anchor_index;
+  RotationAnchor active_rotation_anchor;
   std::vector<float> drag_distances;
 
-  void setGimbals();
+  void updateRotationAnchors();
 
   glm::vec2 ndcToScreen(glm::vec2 ndc) const;
 

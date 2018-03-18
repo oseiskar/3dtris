@@ -31,7 +31,7 @@ GameController::GameController() :
     state(State::WAITING_FOR_PLANE),
     prevTimestamp(0),
     changed_by_controls(false),
-    active_gimbal_index(-1)
+    active_anchor_index(-1)
 {}
 
 void GameController::onTrackingState(bool isTracking) {
@@ -99,7 +99,7 @@ void GameController::setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat
   view_mat = view;
   model_mat = model;
 
-  setGimbals();
+  updateRotationAnchors();
 }
 
 glm::vec2 GameController::ndcToScreen(glm::vec2 ndc) const {
@@ -109,9 +109,9 @@ glm::vec2 GameController::ndcToScreen(glm::vec2 ndc) const {
 
 extern const glm::mat4 GAME_MODEL_TRANSFORM;
 
-void GameController::setGimbals() {
+void GameController::updateRotationAnchors() {
 
-  // gimbal sphere position
+  // anchor sphere position
   const float x_ndc = 0.0;
   const float y_ndc = -0.7;
 
@@ -124,19 +124,17 @@ void GameController::setGimbals() {
 
   const float distance = 0.4;
 
-  const glm::vec3 gimbal_origin = origin + dir*distance;
+  const glm::vec3 anchor_origin = origin + dir*distance;
   const glm::mat4x4 model_mat = this->model_mat * GAME_MODEL_TRANSFORM; // TODO: hacky
   const glm::mat4x4 view_mat = this->view_mat;
   const glm::mat4x4 projection_mat = this->projection_mat;
   auto that = this;
 
-  auto make_gimbal = [gimbal_origin, model_mat, view_mat, projection_mat, that](
-      Axis axis, int dir, std::vector<Axis> rotation_arcs) {
+  auto make_anchor = [anchor_origin, model_mat, view_mat, projection_mat, that](
+      Axis axis, int dir, std::vector<Axis> rotation_arcs, float r) {
 
-    constexpr float r = 0.05;
-
-    GimbalControl g;
-    g.origin = gimbal_origin;
+    RotationAnchor g;
+    g.origin = anchor_origin;
 
     glm::vec3 r0 = (float)dir*axisToVec(axis);
     g.r = util::RotateOnly(model_mat, r*r0);
@@ -145,7 +143,7 @@ void GameController::setGimbals() {
 
     float maxLength = 0;
     for (Axis ax : rotation_arcs) {
-      GimbalControl::Arc arc;
+      RotationAnchor::Arc arc;
       arc.rotation_axis = ax;
       glm::vec3 v = glm::cross(axisToVec(ax), r0);
       arc.dir = util::RotateOnly(model_mat, r*v);
@@ -173,15 +171,11 @@ void GameController::setGimbals() {
       g.arcs[0].dir_screen = glm::normalize(g.arcs[0].dir_screen);
     }
 
-    /*LOGI("r_screen %f %f", g.r_screen.x, g.r_screen.y);
-    LOGI("u_screen %f %f", g.u_screen.x, g.u_screen.y);
-    LOGI("v_screen %f %f", g.v_screen.x, g.v_screen.y);*/
-
     return g;
   };
 
-  gimbals[0] = make_gimbal(Axis::Y, -1, {Axis::Z});
-  gimbals[1] = make_gimbal(Axis::Z, 1, {Axis::X, Axis::Y});
+  rotation_anchors[0] = make_anchor(Axis::Y, -1, {Axis::Z}, 0.07);
+  rotation_anchors[1] = make_anchor(Axis::Z, 1, {Axis::X, Axis::Y}, 0.05);
 }
 
 void GameController::onTap(float x, float y) {
@@ -190,8 +184,8 @@ void GameController::onTap(float x, float y) {
 
   glm::vec3 touch_origin, touch_dir;
   util::GetTouchRay(projection_mat, view_mat, x, y, screen_width, screen_height, touch_origin, touch_dir);
-  LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
-  LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
+  //LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
+  //LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
 
   const glm::vec3 game_origin = util::GetTranslation(model_mat);
   const float delta_height = (touch_origin - game_origin).y;
@@ -216,32 +210,31 @@ void GameController::onTap(float x, float y) {
 
 void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   glm::vec2 pos = glm::vec2(x2, y2);
-  LOGI("scroll pos %f %f", pos.x, pos.y);
+  //LOGI("scroll pos %f %f", pos.x, pos.y);
 
-  constexpr float MAX_DISTANCE_TO_GIMBAL_ANCHOR = 200;
+  constexpr float MAX_DISTANCE_TO_ROTATION_ANCHOR = 200;
 
   float minDist = 0;
-  if (active_gimbal_index < 0) {
-    for (int i = 0; i < gimbals.size(); ++i) {
-      float dist = glm::length(gimbals[i].r_screen - pos);
+  if (active_anchor_index < 0) {
+    for (int i = 0; i < rotation_anchors.size(); ++i) {
+      float dist = glm::length(rotation_anchors[i].r_screen - pos);
       if (i == 0 || dist < minDist) {
         minDist = dist;
-        if (dist < MAX_DISTANCE_TO_GIMBAL_ANCHOR) {
-          active_gimbal_index = i;
+        if (dist < MAX_DISTANCE_TO_ROTATION_ANCHOR) {
+          active_anchor_index = i;
         }
       }
     }
-    if (active_gimbal_index >= 0) {
-      drag_distances = std::vector<float>(gimbals[active_gimbal_index].arcs.size(), 0.0);
+    if (active_anchor_index >= 0) {
+      drag_distances = std::vector<float>(rotation_anchors[active_anchor_index].arcs.size(), 0.0);
     }
   } else {
     const glm::vec2 dvec(dx, dy);
-    LOGI("dvec %f %f", dx, dy);
 
     float max_drag = 0;
     int best_arc_index = 0;
     for (int i = 0; i < drag_distances.size(); ++i) {
-      const GimbalControl::Arc &arc = gimbals[active_gimbal_index].arcs[i];
+      const RotationAnchor::Arc &arc = rotation_anchors[active_anchor_index].arcs[i];
 
       drag_distances[i] += glm::dot(arc.dir_screen, dvec);
       if (abs(drag_distances[i]) >= abs(max_drag)) {
@@ -250,40 +243,40 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
       }
     }
 
-    // set active gimbal
-    GimbalControl gimbal = gimbals[active_gimbal_index];
+    // set active anchor
+    RotationAnchor anchor = rotation_anchors[active_anchor_index];
 
     const float PIXELS_TO_90_DEG_ROTATION = 200;
     const float ANGLE_PER_PIXEL = M_PI*0.5 / PIXELS_TO_90_DEG_ROTATION;
 
     const float ang = -max_drag * ANGLE_PER_PIXEL; // mystery sign flip
 
-    const glm::vec3 r0 = gimbal.r, v0 = gimbal.arcs[best_arc_index].dir;
-    gimbal.r = cos(ang) * r0 + sin(ang) * v0;;
-    gimbal.arcs[best_arc_index].dir = -sin(ang) * r0 + cos(ang) * v0;
+    const glm::vec3 r0 = anchor.r, v0 = anchor.arcs[best_arc_index].dir;
+    anchor.r = cos(ang) * r0 + sin(ang) * v0;;
+    anchor.arcs[best_arc_index].dir = -sin(ang) * r0 + cos(ang) * v0;
 
-    active_gimbal = gimbal;
+    active_rotation_anchor = anchor;
 
     const float ROTATION_THRESHOLD = M_PI*0.25; // 45 degrees
 
     if (abs(ang) > ROTATION_THRESHOLD) {
-      rotate(gimbal.arcs[best_arc_index].rotation_axis,
+      rotate(anchor.arcs[best_arc_index].rotation_axis,
           ang > 0 ? RotationDirection::CCW : RotationDirection::CW);
 
       // reset drag distances
-      drag_distances = std::vector<float>(gimbals[active_gimbal_index].arcs.size(), 0.0);
+      drag_distances = std::vector<float>(rotation_anchors[active_anchor_index].arcs.size(), 0.0);
     }
   }
 }
 
 void GameController::onTouchUp(float x, float y) {
-  active_gimbal_index = -1;
+  active_anchor_index = -1;
   drag_distances.clear();
 }
 
-GameController::GimbalControl GameController::getActiveGimbal() const {
-  assert(hasActiveGimbal());
-  return active_gimbal;
+GameController::RotationAnchor GameController::getActiveRotationAnchor() const {
+  assert(hasActiveRotationAnchor());
+  return active_rotation_anchor;
 }
 
 void GameController::moveXY(int dx, int dy) {
