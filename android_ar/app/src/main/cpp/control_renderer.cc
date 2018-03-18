@@ -33,10 +33,10 @@ namespace {
     };
 
     auto makeGimbal = [makeArc](const GameController::GimbalControl& gimbal) {
-      makeArc(gimbal.origin, gimbal.r, gimbal.u);
-      makeArc(gimbal.origin, gimbal.r, gimbal.v);
-      makeArc(gimbal.origin, gimbal.r, -gimbal.u);
-      makeArc(gimbal.origin, gimbal.r, -gimbal.v);
+      for (auto arc : gimbal.arcs) {
+        makeArc(gimbal.origin, gimbal.r, arc.dir);
+        makeArc(gimbal.origin, gimbal.r, -arc.dir);
+      }
     };
 
     if (controller.hasActiveGimbal()) {

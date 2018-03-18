@@ -35,12 +35,19 @@ public:
 
   struct GimbalControl {
     glm::vec3 origin;
-    glm::vec3 r, u, v;
-    Axis u_axis, v_axis;
-    glm::vec2 r_screen, u_screen, v_screen;
+    glm::vec3 r;
+    glm::vec2 r_screen;
+
+    struct Arc {
+      Axis rotation_axis;
+      glm::vec3 dir;
+      glm::vec2 dir_screen;
+    };
+
+    std::vector<Arc> arcs;
   };
 
-  const std::array<GimbalControl, 3> &getGimbals() const {
+  const std::array<GimbalControl, 2> &getGimbals() const {
     return gimbals;
   };
 
@@ -60,12 +67,13 @@ private:
   glm::mat4x4 projection_mat, view_mat, model_mat;
   int screen_width, screen_height;
 
-  std::array<GimbalControl, 3> gimbals;
+  std::array<GimbalControl, 2> gimbals;
   int active_gimbal_index;
-  float active_v_dist = 0, active_u_dist = 0;
   GimbalControl active_gimbal;
+  std::vector<float> drag_distances;
 
   void setGimbals();
+
   glm::vec2 ndcToScreen(glm::vec2 ndc) const;
 
   // controls
