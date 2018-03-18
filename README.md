@@ -2,6 +2,8 @@
 
 A game and an experiment on using WebGL, Emscripten and ARCore.
 
+![3dtris](android_ar/app/src/main/res/drawable-xhdpi/ic_launcher.png)
+
 ## Building the browser version
 
 The browser version can be built like this
