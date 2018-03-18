@@ -131,12 +131,11 @@ void GameController::updateRotationAnchors() {
   auto that = this;
 
   auto make_anchor = [anchor_origin, model_mat, view_mat, projection_mat, that](
-      Axis axis, int dir, std::vector<Axis> rotation_arcs, float r) {
+      glm::vec3 r0, std::vector<Axis> rotation_arcs, float r) {
 
     RotationAnchor g;
     g.origin = anchor_origin;
 
-    glm::vec3 r0 = (float)dir*axisToVec(axis);
     g.r = util::RotateOnly(model_mat, r*r0);
     glm::vec4 screen_coords = projection_mat * view_mat * glm::vec4(g.origin + g.r, 1);
     g.r_screen = that->ndcToScreen(glm::vec2(screen_coords.x, screen_coords.y) / screen_coords.w);
@@ -174,8 +173,12 @@ void GameController::updateRotationAnchors() {
     return g;
   };
 
-  rotation_anchors[0] = make_anchor(Axis::Y, -1, {Axis::Z}, 0.07);
-  rotation_anchors[1] = make_anchor(Axis::Z, 1, {Axis::X, Axis::Y}, 0.05);
+  const glm::vec3 z_anchor_r = glm::normalize(util::RotateOnly(
+      glm::inverse(model_mat),
+      -glm::vec3(dir.x, 0, dir.z)));
+
+  rotation_anchors[0] = make_anchor(z_anchor_r, {Axis::Z}, 0.05);
+  rotation_anchors[1] = make_anchor(glm::vec3(0,0,1), {Axis::X, Axis::Y}, 0.05);
 }
 
 void GameController::onTap(float x, float y) {
@@ -220,7 +223,7 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
   glm::vec2 pos = glm::vec2(x2, y2);
   //LOGI("scroll pos %f %f", pos.x, pos.y);
 
-  constexpr float MAX_DISTANCE_TO_ROTATION_ANCHOR = 200;
+  constexpr float MAX_DISTANCE_TO_ROTATION_ANCHOR = 150;
 
   float minDist = 0;
   if (active_anchor_index < 0) {
