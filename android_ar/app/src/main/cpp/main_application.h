@@ -72,6 +72,8 @@ public:
   // @param y: y position on the screen (pixels).
   void OnTap(float x, float y);
 
+  void OnLongPress(float x, float y);
+
   void OnTouchUp(float x, float y);
 
   void OnScroll(float x1, float y1, float x2, float y2, float dx, float dy);

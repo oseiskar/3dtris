@@ -208,6 +208,14 @@ void GameController::onTap(float x, float y) {
   } // else no front-face ray intersection
 }
 
+
+void GameController::onLongPress(float x, float y) {
+  LOGI("long press %f %f", x, y);
+  if (y/(float)screen_height < 0.5 && !hasActiveRotationAnchor()) {
+    drop();
+  }
+}
+
 void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   glm::vec2 pos = glm::vec2(x2, y2);
   //LOGI("scroll pos %f %f", pos.x, pos.y);
@@ -285,4 +293,9 @@ void GameController::moveXY(int dx, int dy) {
 
 void GameController::rotate(Axis ax, RotationDirection dir) {
   changed_by_controls = changed_by_controls || game->rotate(ax, dir);
+}
+
+void GameController::drop() {
+  game->drop();
+  changed_by_controls = true;
 }

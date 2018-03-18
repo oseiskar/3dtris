@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity
                     new Runnable() {
                       @Override
                       public void run() {
-                        JniInterface.OnTap(mNativeApplication, e.getX(), e.getY());
+                        JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
                       }
                     });
                 return true;
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity
                         new Runnable() {
                           @Override
                           public void run() {
-                            JniInterface.OnTap(mNativeApplication, e.getX(), e.getY());
+                            JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
                           }
                         });
                 return true;
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity
                 return true;
               }
 
-              @Override
+              /*@Override
               public boolean onFling(final MotionEvent e1,
                                      final MotionEvent e2,
                                      final float vx, final float vy) {
@@ -167,6 +167,17 @@ public class MainActivity extends AppCompatActivity
                           }
                         });
                 return true;
+              }*/
+
+              @Override
+              public void onLongPress(final MotionEvent e) {
+                  mSurfaceView.queueEvent(
+                          new Runnable() {
+                              @Override
+                              public void run() {
+                                  JniInterface.onLongPress(mNativeApplication, e.getX(), e.getY());
+                              }
+                          });
               }
 
               @Override

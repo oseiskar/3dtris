@@ -34,7 +34,8 @@ public class JniInterface {
   public static native void onGlSurfaceDrawFrame(long nativeApplication);
 
   /** OnTouch event, called on the OpenGL thread. */
-  public static native void OnTap(long nativeApplication, float x, float y);
+  public static native void onTap(long nativeApplication, float x, float y);
+  public static native void onLongPress(long nativeApplication, float x, float y);
 
   public static native void onTouchUp(long nativeApplication, float x, float y);
 

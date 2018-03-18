@@ -86,9 +86,14 @@ JNI_METHOD(void, onGlSurfaceDrawFrame)
   native(native_application)->OnDrawFrame();
 }
 
-JNI_METHOD(void, OnTap)
+JNI_METHOD(void, onTap)
 (JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
   native(native_application)->OnTap(x, y);
+}
+
+JNI_METHOD(void, onLongPress)
+(JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
+  native(native_application)->OnLongPress(x, y);
 }
 
 JNI_METHOD(void, onTouchUp)
