@@ -26,6 +26,9 @@ ConcreteGame::ConcreteGame(unsigned int randomSeed)
 {}
 
 std::vector<Block> ConcreteGame::getActiveBlocks() const {
+    if (isOver()) {
+        return {};
+    }
     return activePiece.getBlocks();
 }
 
