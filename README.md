@@ -1,8 +1,8 @@
 # 3D-tris
 
-A game and an experiment on using WebGL, Emscripten and other interesting stuff.
+A game and an experiment on using WebGL, Emscripten and ARCore.
 
-## Building
+## Building the browser version
 
 The browser version can be built like this
 
@@ -16,6 +16,10 @@ The browser version can be built like this
 There is also an old [JavaScript-only version](https://github.com/oseiskar/3dtris/releases/tag/js-only),
 hosted in https://oseiskar.github.io/3dtris/ which works without this complicated
 build process.
+
+## ARCore version for Android
+
+Import `android_ar/build.gradle` to Android Studio 3+ and run.
 
 ## Copyright & License info
 
