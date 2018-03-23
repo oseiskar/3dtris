@@ -91,6 +91,9 @@ public:
   bool IsGameOver() const {
     return game_controller_.getGame().isOver();
   }
+  int GetScore() const {
+    return game_controller_.getGame().getScore();
+  }
 
 private:
   ArSession* ar_session_ = nullptr;

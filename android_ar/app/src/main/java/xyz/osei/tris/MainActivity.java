@@ -23,13 +23,13 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -41,7 +41,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class MainActivity extends AppCompatActivity
     implements GLSurfaceView.Renderer, DisplayManager.DisplayListener {
   private static final String TAG = MainActivity.class.getSimpleName();
-  private static final int SNACKBAR_UPDATE_INTERVAL_MILLIS = 200; // In milliseconds.
+  private static final int TEXT_UPDATE_INTERVAL_MILLIS = 100; // In milliseconds.
 
   private GLSurfaceView mSurfaceView;
 
@@ -53,39 +53,57 @@ public class MainActivity extends AppCompatActivity
   private long mNativeApplication;
   private GestureDetector mGestureDetector;
 
-  private Snackbar mSnackBar;
-  private Handler mPlaneStatusCheckingHandler;
-  private final Runnable mPlaneStatusCheckingRunnable =
-      new Runnable() {
-        @Override
-        public void run() {
-          // The runnable is executed on main UI thread.
-          try {
-            final String text = getSnackBarMessage(mNativeApplication);
-            if (text == null) {
-              if (mSnackBar.isShown()) mSnackBar.dismiss();
-            } else {
-              if (!mSnackBar.isShown()) mSnackBar.show();
-              mSnackBar.setText(text);
-            }
-            mPlaneStatusCheckingHandler.postDelayed(
-                    mPlaneStatusCheckingRunnable, SNACKBAR_UPDATE_INTERVAL_MILLIS);
-          } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-          }
-        }
-      };
+  private TextView mScoreView;
+  private TextView mStatusView;
+  private String mStatusMessage = "";
+  private int mScore = -1;
 
-  private static String getSnackBarMessage(long nativeApplication) {
+  private Handler mTextChangeHandler;
+  private final Runnable mTextChangeRunnable =
+        new Runnable() {
+            @Override
+            public void run() {
+                // The runnable is executed on main UI thread.
+                try {
+                    refreshTexts();
+                    mTextChangeHandler.postDelayed(
+                            mTextChangeRunnable, TEXT_UPDATE_INTERVAL_MILLIS);
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        };
+
+
+  private void refreshTexts() {
+    final String text = getStatusMessage(mNativeApplication);
+    final int score = JniInterface.getScore(mNativeApplication);
+    if (!text.equals(mStatusMessage)) {
+      if (text.isEmpty()) {
+        mStatusView.setVisibility(View.GONE);
+      } else {
+        mStatusView.setVisibility(View.VISIBLE);
+        mStatusView.setText(text);
+      }
+      mStatusMessage = text;
+    }
+
+    if (score != mScore) {
+      mScore = score;
+      mScoreView.setText("" + mScore);
+    }
+  }
+
+  private static String getStatusMessage(long nativeApplication) {
     if (JniInterface.isTracking(nativeApplication)) {
       if (JniInterface.gameStarted(nativeApplication)) {
         if (JniInterface.gameOver(nativeApplication)) {
           return "Game over";
         } else {
-          return null;
+          return "";
         }
       } else {
-        return "Tap the screen to place and start the game";
+        return "Tap to place & start";
       }
     } else {
       if (JniInterface.gameStarted(nativeApplication)) {
@@ -101,6 +119,8 @@ public class MainActivity extends AppCompatActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
+    mScoreView = (TextView) findViewById(R.id.scoreview);
+    mStatusView = (TextView) findViewById(R.id.statusview);
 
     // Set up tap listener.
     mGestureDetector =
@@ -217,7 +237,7 @@ public class MainActivity extends AppCompatActivity
     JniInterface.assetManager = getAssets();
     mNativeApplication = JniInterface.createNativeApplication(getAssets());
 
-    mPlaneStatusCheckingHandler = new Handler();
+    mTextChangeHandler = new Handler();
   }
 
   @Override
@@ -233,16 +253,7 @@ public class MainActivity extends AppCompatActivity
     JniInterface.onResume(mNativeApplication, getApplicationContext(), this);
     mSurfaceView.onResume();
 
-    mSnackBar =
-        Snackbar.make(
-            MainActivity.this.findViewById(android.R.id.content),
-            getSnackBarMessage(mNativeApplication),
-            Snackbar.LENGTH_INDEFINITE);
-    // Set the snackbar background to light transparent black color.
-    mSnackBar.getView().setBackgroundColor(0xbf323232);
-    mSnackBar.show();
-    mPlaneStatusCheckingHandler.postDelayed(
-        mPlaneStatusCheckingRunnable, SNACKBAR_UPDATE_INTERVAL_MILLIS);
+    mTextChangeHandler.postDelayed(mTextChangeRunnable, TEXT_UPDATE_INTERVAL_MILLIS);
 
     // Listen to display changed events to detect 180° rotation, which does not cause a config
     // change or view resize.
@@ -255,7 +266,7 @@ public class MainActivity extends AppCompatActivity
     mSurfaceView.onPause();
     JniInterface.onPause(mNativeApplication);
 
-    mPlaneStatusCheckingHandler.removeCallbacks(mPlaneStatusCheckingRunnable);
+      mTextChangeHandler.removeCallbacks(mTextChangeRunnable);
 
     getSystemService(DisplayManager.class).unregisterDisplayListener(this);
   }

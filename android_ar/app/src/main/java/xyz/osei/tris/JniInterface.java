@@ -52,4 +52,5 @@ public class JniInterface {
   public static native boolean isTracking(long nativeApplication);
   public static native boolean gameStarted(long nativeApplication);
   public static native boolean gameOver(long nativeApplication);
+  public static native int getScore(long nativeApplication);
 }

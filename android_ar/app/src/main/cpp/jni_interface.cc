@@ -129,6 +129,12 @@ JNI_METHOD(jboolean, gameOver)
       native(native_application)->IsGameOver() ? JNI_TRUE : JNI_FALSE);
 }
 
+JNI_METHOD(jint, getScore)
+(JNIEnv *, jclass, jlong native_application) {
+  return static_cast<jint>(
+      native(native_application)->GetScore());
+}
+
 JNIEnv *GetJniEnv() {
   JNIEnv *env;
   jint result = g_vm->AttachCurrentThread(&env, nullptr);

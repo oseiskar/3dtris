@@ -38,7 +38,7 @@ class BackgroundRenderer {
 
   // Draws the background image.  This methods must be called for every ArFrame
   // returned by ArSession_update() to catch display geometry change events.
-  void Draw(const ArSession* session, const ArFrame* frame);
+  void Draw(const ArSession* session, const ArFrame* frame, bool gameIsOn);
 
   // Returns the generated texture name for the GL_TEXTURE_EXTERNAL_OES target.
   GLuint GetTextureId() const;
@@ -52,6 +52,7 @@ class BackgroundRenderer {
   GLuint attribute_vertices_;
   GLuint attribute_uvs_;
   GLuint uniform_texture_;
+  GLuint uniform_brightness_;
 
   float transformed_uvs_[kNumVertices * 2];
   bool uvs_initialized_ = false;

@@ -27,4 +27,24 @@
       android:layout_height="match_parent"
       android:layout_gravity="top"/>
 
+  <TextView
+      android:id="@+id/statusview"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerHorizontal="true"
+      android:layout_centerVertical="true"
+      android:text="Initializing..."
+      android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+  <TextView
+      android:id="@+id/scoreview"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentEnd="true"
+      android:layout_alignParentTop="true"
+      android:layout_marginEnd="28dp"
+      android:layout_marginTop="26dp"
+      android:text="000"
+      android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+
 </RelativeLayout>

@@ -234,7 +234,6 @@ void MainApplication::OnDrawFrame() {
     game_controller_.onTrackingState(false);
     return;
   }
-
   ArSession_setCameraTextureName(ar_session_,
                                  background_renderer_.GetTextureId());
 
@@ -257,7 +256,8 @@ void MainApplication::OnDrawFrame() {
   ArCamera_getTrackingState(ar_session_, ar_camera, &camera_tracking_state);
   ArCamera_release(ar_camera);
 
-  background_renderer_.Draw(ar_session_, ar_frame_);
+  background_renderer_.Draw(ar_session_, ar_frame_,
+      game_controller_.getState() == GameController::State::RUNNING);
 
   // If the camera isn't tracking don't bother rendering other objects.
   if (camera_tracking_state != AR_TRACKING_STATE_TRACKING) {

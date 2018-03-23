@@ -48,9 +48,11 @@ constexpr char kFragmentShader[] = R"(
     #extension GL_OES_EGL_image_external : require
     precision mediump float;
     uniform samplerExternalOES texture;
+    uniform float brightness;
     varying vec2 v_textureCoords;
     void main() {
-      gl_FragColor = texture2D(texture, v_textureCoords);
+      vec4 color = texture2D(texture, v_textureCoords);
+      gl_FragColor = vec4(color.xyz*brightness, 1.0);
     })";
 
 }  // namespace
@@ -68,11 +70,12 @@ void BackgroundRenderer::InitializeGlContent() {
   glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   uniform_texture_ = glGetUniformLocation(shader_program_, "texture");
+  uniform_brightness_ = glGetUniformLocation(shader_program_, "brightness");
   attribute_vertices_ = glGetAttribLocation(shader_program_, "vertex");
   attribute_uvs_ = glGetAttribLocation(shader_program_, "textureCoords");
 }
 
-void BackgroundRenderer::Draw(const ArSession* session, const ArFrame* frame) {
+void BackgroundRenderer::Draw(const ArSession* session, const ArFrame* frame, bool gameIsOn) {
   static_assert(std::extent<decltype(kUvs)>::value == kNumVertices * 2,
                 "Incorrect kUvs length");
   static_assert(std::extent<decltype(kVertices)>::value == kNumVertices * 3,
@@ -91,6 +94,9 @@ void BackgroundRenderer::Draw(const ArSession* session, const ArFrame* frame) {
   glUseProgram(shader_program_);
   glDepthMask(GL_FALSE);
 
+  const float brightness = gameIsOn ? 1.0f : 0.4f;
+
+  glUniform1f(uniform_brightness_, brightness);
   glUniform1i(uniform_texture_, 1);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture_id_);
