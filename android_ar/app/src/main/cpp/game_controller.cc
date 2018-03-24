@@ -112,8 +112,8 @@ extern const glm::mat4 GAME_MODEL_TRANSFORM;
 void GameController::updateRotationAnchors() {
 
   // anchor sphere position
-  const float x_ndc = 0.0;
-  const float y_ndc = -0.7;
+  const float x_ndc = 0.7;
+  const float y_ndc = 0.0;
 
   const glm::mat4 inv_view = glm::inverse(view_mat);
   const glm::vec4 v = inv_view
@@ -214,7 +214,7 @@ void GameController::onTap(float x, float y) {
 
 void GameController::onLongPress(float x, float y) {
   LOGI("long press %f %f", x, y);
-  if (y/(float)screen_height < 0.5 && !hasActiveRotationAnchor()) {
+  if (x/(float)screen_width < 0.5 && !hasActiveRotationAnchor()) {
     drop();
   }
 }

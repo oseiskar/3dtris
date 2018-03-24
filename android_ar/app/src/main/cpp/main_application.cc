@@ -257,7 +257,8 @@ void MainApplication::OnDrawFrame() {
   ArCamera_release(ar_camera);
 
   background_renderer_.Draw(ar_session_, ar_frame_,
-      game_controller_.getState() == GameController::State::RUNNING);
+      game_controller_.getState() == GameController::State::RUNNING &&
+      !game_controller_.getGame().isOver());
 
   // If the camera isn't tracking don't bother rendering other objects.
   if (camera_tracking_state != AR_TRACKING_STATE_TRACKING) {
