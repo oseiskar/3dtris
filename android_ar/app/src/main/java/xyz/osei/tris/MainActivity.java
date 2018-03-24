@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity
                           }
                         });
                 return true;
-              }*/
+              }
 
               @Override
               public void onLongPress(final MotionEvent e) {
@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity
                                   JniInterface.onLongPress(mNativeApplication, e.getX(), e.getY());
                               }
                           });
-              }
+              }*/
 
               @Override
               public boolean onDown(MotionEvent e) {

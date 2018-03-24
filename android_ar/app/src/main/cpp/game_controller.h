@@ -48,6 +48,13 @@ public:
     std::vector<Arc> arcs;
   };
 
+  struct DropArrow {
+    glm::vec3 r;
+    glm::vec3 dir;
+    glm::vec3 side_dir;
+    glm::vec2 r_screen;
+  };
+
   const std::array<RotationAnchor, 2> &getRotationAnchors() const {
     return rotation_anchors;
   };
@@ -57,6 +64,10 @@ public:
   }
 
   RotationAnchor getActiveRotationAnchor() const;
+
+  DropArrow getDropArrow() const {
+    return drop_arrow;
+  }
 
 private:
   std::unique_ptr<Game> game;
@@ -73,7 +84,10 @@ private:
   RotationAnchor active_rotation_anchor;
   std::vector<float> drag_distances;
 
+  DropArrow drop_arrow;
+
   void updateRotationAnchors();
+  void updateDropArrow();
 
   glm::vec2 ndcToScreen(glm::vec2 ndc) const;
 

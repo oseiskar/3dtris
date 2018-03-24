@@ -100,6 +100,7 @@ void GameController::setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat
   model_mat = model;
 
   updateRotationAnchors();
+  updateDropArrow();
 }
 
 glm::vec2 GameController::ndcToScreen(glm::vec2 ndc) const {
@@ -108,6 +109,33 @@ glm::vec2 GameController::ndcToScreen(glm::vec2 ndc) const {
 }
 
 extern const glm::mat4 GAME_MODEL_TRANSFORM;
+
+void GameController::updateDropArrow() {
+
+  const float x_ndc = -0.75f;
+  const float y_ndc = 0.0;
+
+  const glm::mat4 inv_view = glm::inverse(view_mat);
+  const glm::vec4 v = inv_view
+                      * glm::inverse(projection_mat)
+                      * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
+  const glm::vec3 dir = glm::normalize(glm::vec3(v.x, v.y, v.z));
+  const glm::vec3 origin = util::GetTranslation(inv_view);
+
+  const glm::mat4x4 model_mat = this->model_mat * GAME_MODEL_TRANSFORM; // hacky
+
+  // anchor sphere position
+  constexpr float distance = 0.4;
+  constexpr float drop_arrow_scale = 0.03;
+
+  drop_arrow.r = origin + dir*distance;
+  drop_arrow.dir = util::RotateOnly(model_mat, glm::vec3(0,0,-1)) * drop_arrow_scale;
+  drop_arrow.side_dir = glm::normalize(glm::vec3(dir.z, 0, -dir.x)) * drop_arrow_scale;
+
+  glm::vec4 screen_coords = projection_mat * view_mat * glm::vec4(drop_arrow.r, 1);
+  drop_arrow.r_screen = ndcToScreen(glm::vec2(screen_coords.x, screen_coords.y) / screen_coords.w);
+
+}
 
 void GameController::updateRotationAnchors() {
 
@@ -125,7 +153,7 @@ void GameController::updateRotationAnchors() {
   const float distance = 0.4;
 
   const glm::vec3 anchor_origin = origin + dir*distance;
-  const glm::mat4x4 model_mat = this->model_mat * GAME_MODEL_TRANSFORM; // TODO: hacky
+  const glm::mat4x4 model_mat = this->model_mat * GAME_MODEL_TRANSFORM; // hacky
   const glm::mat4x4 view_mat = this->view_mat;
   const glm::mat4x4 projection_mat = this->projection_mat;
   auto that = this;
@@ -140,7 +168,6 @@ void GameController::updateRotationAnchors() {
     glm::vec4 screen_coords = projection_mat * view_mat * glm::vec4(g.origin + g.r, 1);
     g.r_screen = that->ndcToScreen(glm::vec2(screen_coords.x, screen_coords.y) / screen_coords.w);
 
-    float maxLength = 0;
     for (Axis ax : rotation_arcs) {
       RotationAnchor::Arc arc;
       arc.rotation_axis = ax;
@@ -185,6 +212,18 @@ void GameController::onTap(float x, float y) {
 
   onTouchUp(x, y);
 
+  // check drop arrow hit
+  constexpr float MAX_DISTANCE_TO_DROP_ARROW = 60;
+  const float drop_arrow_dist = glm::length(drop_arrow.r_screen - glm::vec2(x, y));
+  if (drop_arrow_dist < MAX_DISTANCE_TO_DROP_ARROW && !hasActiveRotationAnchor()) {
+    drop();
+    return;
+  }
+
+  if (x/(float)screen_width < 0.3*0.5) {
+    return; // don't move horizontally when barely missing the drop arrow
+  }
+
   glm::vec3 touch_origin, touch_dir;
   util::GetTouchRay(projection_mat, view_mat, x, y, screen_width, screen_height, touch_origin, touch_dir);
   //LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
@@ -213,10 +252,7 @@ void GameController::onTap(float x, float y) {
 
 
 void GameController::onLongPress(float x, float y) {
-  LOGI("long press %f %f", x, y);
-  if (x/(float)screen_width < 0.5 && !hasActiveRotationAnchor()) {
-    drop();
-  }
+  //LOGI("long press %f %f", x, y);
 }
 
 void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {

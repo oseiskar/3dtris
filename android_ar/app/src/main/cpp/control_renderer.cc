@@ -11,7 +11,7 @@ namespace {
 
   typedef ControlRenderer::LineList LineList;
 
-  LineList drawRotationAnchors(const GameController &controller) {
+  LineList drawScreenControls(const GameController &controller) {
 
     LineList lines;
 
@@ -53,6 +53,24 @@ namespace {
       }
     }
 
+    // draw drop arrow
+    auto drop_arrow = controller.getDropArrow();
+    constexpr float head_scale = 0.2f;
+    const glm::vec3 drop_d = drop_arrow.dir * 0.5f;
+    const glm::vec3 down = drop_arrow.r + drop_d;
+
+    lines.push_back(std::make_pair(
+        drop_arrow.r - drop_d,
+        down));
+
+    lines.push_back(std::make_pair(
+        down,
+        down + (drop_arrow.side_dir - drop_arrow.dir) * head_scale));
+
+    lines.push_back(std::make_pair(
+        down,
+        down + (-drop_arrow.side_dir - drop_arrow.dir) * head_scale));
+
     return lines;
   }
 
@@ -77,7 +95,7 @@ namespace {
     };
 
     auto dim = controller.getGame().getDimensions();
-    const float d = (std::max(dim.x, dim.y)*0.5f + 3);
+    const float d = (std::max(dim.x, dim.y)*0.5f + 2);
 
     const glm::vec3 x = util::RotateOnly(GAME_MODEL_TRANSFORM, glm::vec3(1,0,0));
     const glm::vec3 y = util::RotateOnly(GAME_MODEL_TRANSFORM, glm::vec3(0,1,0));
@@ -153,7 +171,7 @@ void ControlRenderer::Draw(const glm::mat4& projection_mat,
   glUniform4f(uniform_color_, kColor.r, kColor.g, kColor.b, kColor.a);
   glEnableVertexAttribArray(attri_vertices_);
 
-  setLines(drawRotationAnchors(controller_));
+  setLines(drawScreenControls(controller_));
   glm::mat4 mvp_mat = projection_mat * view_mat;
   glUniformMatrix4fv(uniform_mvp_mat_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
   glVertexAttribPointer(attri_vertices_, 3, GL_FLOAT, GL_FALSE, 0, vertices_.data());
