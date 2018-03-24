@@ -78,11 +78,13 @@ bool ConcreteGame::tick(int dtMs) {
 // controls
 
 bool ConcreteGame::moveXY(int dx, int dy) {
+    if (isOver()) return false;
     if (abs(dx) + abs(dy) != 1) abort();
     return setActivePieceIfFits(activePiece.translated(Pos3d {dx,dy,0}));
 }
 
 bool ConcreteGame::rotate(Axis axis, RotationDirection dir) {
+    if (isOver()) return false;
     if (axis != Axis::X && axis != Axis::Y && axis != Axis::Z) abort();
     if (dir != RotationDirection::CW && dir != RotationDirection::CCW) abort();
 
@@ -90,6 +92,7 @@ bool ConcreteGame::rotate(Axis axis, RotationDirection dir) {
 }
 
 void ConcreteGame::drop() {
+    if (isOver()) return;
     int height = 0;
     while (moveDown()) height++;
     score += game_config::DROP_SCORE_MULTIPLIER * height;
