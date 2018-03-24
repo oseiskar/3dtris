@@ -309,7 +309,7 @@ void MainApplication::OnDrawFrame() {
     game_renderer_.Draw(projection_mat, view_mat, game_model_mat_, light_intensity);
     game_box_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_, true);
     if (!game_controller_.getGame().isOver()) {
-      control_renderer_.Draw(projection_mat, view_mat, game_model_mat_);
+      control_renderer_.Draw(projection_mat, view_mat, game_model_mat_, game_scale_);
     }
   }
   else {

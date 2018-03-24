@@ -397,6 +397,11 @@ glm::vec3 RotateOnly(const glm::mat4x4& mat, glm::vec3 vec) {
   return GetVec3(mat*glm::vec4(vec, 0.0));
 }
 
+
+glm::vec3 TransformVec3(const glm::mat4x4& mat, glm::vec3 vec) {
+  return GetVec3(mat*glm::vec4(vec, 1.0));
+}
+
 void GetTouchRay(const glm::mat4x4 projection_mat, const glm::mat4x4 view_mat,
                  float x, float y, int w, int h,
                  glm::vec3& origin, glm::vec3& dir) {

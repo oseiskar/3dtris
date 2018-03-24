@@ -25,12 +25,16 @@ public:
 
   void Draw(const glm::mat4& projection_mat,
             const glm::mat4& view_mat,
-            const glm::mat4& model_mat);
+            const glm::mat4& model_mat,
+            float game_scale);
+
+  typedef std::vector< std::pair<glm::vec3, glm::vec3> > LineList;
 
 private:
-  void setLines(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines);
+  void setLines(const LineList &lines);
 
   const GameController &controller_;
+  const LineList arrows_;
 
   std::vector<GLfloat> vertices_;
   std::vector<GLushort> indices_;
