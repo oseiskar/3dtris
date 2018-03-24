@@ -6,11 +6,10 @@ std::unique_ptr<Game> buildGame(unsigned int randomSeed) {
 }
 
 namespace game_config {
-    static const Pos3d DIMENSIONS { 5, 5, 14 };
+    static const Pos3d DIMENSIONS { 5, 4, 14 };
     static const int DROP_SCORE_MULTIPLIER = 1;
     static const int REMOVAL_SCORE_MULTIPLIER = 20;
-    static const int INITIAL_DROP_INTERVAL_MS = 1000;
-    static const double DROP_INTERVAL_HALF_LIFE_N_PIECES = 50;
+    static const int DROP_INTERVAL_MS = 1000;
 }
 
 ConcreteGame::ConcreteGame(unsigned int randomSeed)
@@ -21,7 +20,7 @@ ConcreteGame::ConcreteGame(unsigned int randomSeed)
     activePiece(pieceGenerator.nextPiece()),
     score(0),
     alive(true),
-    timeToNextDownMs(game_config::INITIAL_DROP_INTERVAL_MS),
+    timeToNextDownMs(game_config::DROP_INTERVAL_MS),
     nDroppedPieces(0)
 {}
 
@@ -63,13 +62,7 @@ bool ConcreteGame::tick(int dtMs) {
     timeToNextDownMs -= dtMs;
     if (timeToNextDownMs <= 0) {
         moveDown();
-
-        // compute next down
-        timeToNextDownMs = ceil(
-            game_config::INITIAL_DROP_INTERVAL_MS *
-            pow(2, -nDroppedPieces /
-                game_config::DROP_INTERVAL_HALF_LIFE_N_PIECES));
-
+        timeToNextDownMs = game_config::DROP_INTERVAL_MS;
         return true;
     }
     return false;
