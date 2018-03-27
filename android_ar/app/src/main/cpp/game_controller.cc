@@ -168,14 +168,15 @@ void GameController::updateRotationAnchors() {
     glm::vec4 screen_coords = projection_mat * view_mat * glm::vec4(g.origin + g.r, 1);
     g.r_screen = that->ndcToScreen(glm::vec2(screen_coords.x, screen_coords.y) / screen_coords.w);
 
+    LOGI("r_screen %f %f", g.r_screen.x, g.r_screen.y);
     for (Axis ax : rotation_arcs) {
       RotationAnchor::Arc arc;
       arc.rotation_axis = ax;
-      glm::vec3 v = glm::cross(axisToVec(ax), r0);
-      arc.dir = util::RotateOnly(model_mat, r*v);
-      glm::vec4 screen_v = projection_mat * view_mat * glm::vec4(g.origin + g.r + v, 1);
+      arc.dir = util::RotateOnly(model_mat, r*glm::cross(axisToVec(ax), r0));
+      glm::vec4 screen_v = projection_mat * view_mat * glm::vec4(g.origin + g.r + arc.dir, 1);
       arc.dir_screen = that->ndcToScreen(glm::vec2(screen_v.x, screen_v.y) / screen_v.w) - g.r_screen;
       g.arcs.push_back(arc);
+      LOGI("dir %d %f %f", ax, arc.dir_screen.x, arc.dir_screen.y);
     }
 
     // longer direction arrow in screen coordinates determines gesture directions
@@ -211,11 +212,13 @@ void GameController::updateRotationAnchors() {
 void GameController::onTap(float x, float y) {
 
   onTouchUp(x, y);
+  const float REL = std::min(screen_width, screen_height);
 
   // check drop arrow hit
-  constexpr float MAX_DISTANCE_TO_DROP_ARROW = 60;
+  const float MAX_DISTANCE_TO_DROP_ARROW = 0.1f*REL;
+
   const float drop_arrow_dist = glm::length(drop_arrow.r_screen - glm::vec2(x, y));
-  if (drop_arrow_dist < MAX_DISTANCE_TO_DROP_ARROW && !hasActiveRotationAnchor()) {
+  if (drop_arrow_dist < MAX_DISTANCE_TO_DROP_ARROW) {
     drop();
     return;
   }
@@ -259,7 +262,8 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
   glm::vec2 pos = glm::vec2(x2, y2);
   //LOGI("scroll pos %f %f", pos.x, pos.y);
 
-  constexpr float MAX_DISTANCE_TO_ROTATION_ANCHOR = 150;
+  const float REL = std::min(screen_width, screen_height);
+  const float MAX_DISTANCE_TO_ROTATION_ANCHOR = 0.1f * REL;
 
   float minDist = 0;
   if (active_anchor_index < 0) {
@@ -293,8 +297,8 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
     // set active anchor
     RotationAnchor anchor = rotation_anchors[active_anchor_index];
 
-    const float PIXELS_TO_90_DEG_ROTATION = 200;
-    const float ANGLE_PER_PIXEL = M_PI*0.5 / PIXELS_TO_90_DEG_ROTATION;
+    const float PIXELS_TO_90_DEG_ROTATION = 0.2f * REL;
+    const float ANGLE_PER_PIXEL = (float)(M_PI*0.5) / PIXELS_TO_90_DEG_ROTATION;
 
     const float ang = -max_drag * ANGLE_PER_PIXEL; // mystery sign flip
 
@@ -304,7 +308,7 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
 
     active_rotation_anchor = anchor;
 
-    const float ROTATION_THRESHOLD = M_PI*0.25; // 45 degrees
+    const float ROTATION_THRESHOLD = (float)M_PI*0.25f; // 45 degrees
 
     if (abs(ang) > ROTATION_THRESHOLD) {
       rotate(anchor.arcs[best_arc_index].rotation_axis,

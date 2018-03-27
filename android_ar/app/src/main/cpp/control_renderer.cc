@@ -7,7 +7,7 @@
 extern const glm::mat4 GAME_MODEL_TRANSFORM;
 
 namespace {
-  const glm::vec4 kColor = {1.0f, 1.0f, 1.0f, 0.5f};
+  const glm::vec4 kColor = {1.0f, 1.0f, 1.0f, 0.8f};
 
   typedef ControlRenderer::LineList LineList;
 
@@ -178,6 +178,8 @@ void ControlRenderer::Draw(const glm::mat4& projection_mat,
   glDrawElements(GL_LINES, indices_.size(), GL_UNSIGNED_SHORT, indices_.data());
 
   setLines(arrows_);
+  glLineWidth(10.0);
+  glUniform4f(uniform_color_, kColor.r, kColor.g, kColor.b, kColor.a*0.7);
   glm::mat4x4 scale = glm::mat4()*game_scale;
   scale[3][3] = 1.0f;
   mvp_mat = mvp_mat * model_mat * scale;
