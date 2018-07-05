@@ -123,7 +123,7 @@ MainApplication::MainApplication(AAssetManager* asset_manager)
       game_controller_(),
       game_box_renderer_(game_controller_.getGame().getDimensions()),
       control_renderer_(game_controller_),
-      debug_renderer_(),
+      //debug_renderer_(),
       game_model_mat_(1.0f),
       game_scale_(1.0f)
 {
@@ -202,7 +202,7 @@ void MainApplication::OnSurfaceCreated() {
   game_box_renderer_.InitializeGlContent();
   game_renderer_.InitializeGlContent(asset_manager_);
   control_renderer_.InitializeGlContent();
-  debug_renderer_.InitializeGlContent();
+  //debug_renderer_.InitializeGlContent();
 }
 
 void MainApplication::OnDisplayGeometryChanged(int display_rotation,
@@ -219,7 +219,7 @@ void MainApplication::OnDisplayGeometryChanged(int display_rotation,
 
 void MainApplication::OnDrawFrame() {
   // Render the scene.
-  glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glEnable(GL_CULL_FACE);
@@ -271,7 +271,7 @@ void MainApplication::OnDrawFrame() {
     game_renderer_.update(game_controller_.getGame(), game_scale_);
   }
 
-  debug_renderer_.Draw(projection_mat, view_mat);
+  //debug_renderer_.Draw(projection_mat, view_mat);
 
   // Get light estimation value.
   ArLightEstimate* ar_light_estimate;
