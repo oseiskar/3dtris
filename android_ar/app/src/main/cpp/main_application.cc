@@ -154,12 +154,11 @@ void MainApplication::OnResume(void* env, void* context, void* activity) {
     // launching the application)
     bool user_requested_install = !install_requested_;
 
-    // === ATTENTION!  ATTENTION!  ATTENTION! ===
-    // This method can and will fail in user-facing situations.  Your
-    // application must handle these cases at least somewhat gracefully.  See
-    // HelloAR Java sample code for reasonable behavior.
-    CHECK(ArCoreApk_requestInstall(env, activity, user_requested_install,
-                                   &install_status) == AR_SUCCESS);
+    // Try to handle possible AR core problems... which is kinda
+    // inconvenient in C++. That's apparently why it's left out in all of
+    // the C examples
+    ar_core_install_error_ = ArCoreApk_requestInstall(env, activity, user_requested_install, &install_status);
+    if (ar_core_install_error_ != AR_SUCCESS) return;
 
     switch (install_status) {
       case AR_INSTALL_STATUS_INSTALLED:
@@ -169,11 +168,9 @@ void MainApplication::OnResume(void* env, void* context, void* activity) {
         return;
     }
 
-    // === ATTENTION!  ATTENTION!  ATTENTION! ===
-    // This method can and will fail in user-facing situations.  Your
-    // application must handle these cases at least somewhat gracefully.  See
-    // HelloAR Java sample code for reasonable behavior.
-    CHECK(ArSession_create(env, context, &ar_session_) == AR_SUCCESS);
+    ar_core_install_error_ = ArSession_create(env, context, &ar_session_);
+    if (ar_core_install_error_ != AR_SUCCESS) return;
+
     CHECK(ar_session_);
 
     ArConfig* ar_config = nullptr;

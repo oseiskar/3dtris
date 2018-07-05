@@ -95,6 +95,24 @@ public class MainActivity extends AppCompatActivity
   }
 
   private static String getStatusMessage(long nativeApplication) {
+    final int arCoreErrorCode = JniInterface.getArCoreInstallError(nativeApplication);
+    // "somewhat graceful" and "reasonable behavior"
+    switch (arCoreErrorCode) {
+        case 0: break; // AR_SUCCESS
+        case -101: // AR_UNAVAILABLE_DEVICE_NOT_COMPATIBLE:
+            return "Sorry, your phone does not support ARCore :,(";
+        case -105: // AR_UNAVAILABLE_USER_DECLINED_INSTALLATION:
+            return "You must install ARCore to play this AR game";
+        case -103: // AR_UNAVAILABLE_APK_TOO_OLD:
+            return "Please update ARCore";
+        case -104: // AR_UNAVAILABLE_SDK_TOO_OLD:
+            return "An ARCore update broke this app (AR_UNAVAILABLE_SDK_TOO_OLD), blame Google";
+        case -9: // AR_ERROR_CAMERA_PERMISSION_NOT_GRANTED:
+            return"No Camera permission, how did that happen?";
+        default:
+            return "ARCore is FUBAR (error " +  arCoreErrorCode + ")";
+    }
+
     if (JniInterface.isTracking(nativeApplication)) {
       if (JniInterface.gameStarted(nativeApplication)) {
         if (JniInterface.gameOver(nativeApplication)) {

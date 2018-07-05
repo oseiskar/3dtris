@@ -135,6 +135,12 @@ JNI_METHOD(jint, getScore)
       native(native_application)->GetScore());
 }
 
+JNI_METHOD(jint, getArCoreInstallError)
+(JNIEnv *, jclass, jlong native_application) {
+  return static_cast<jint>(
+      native(native_application)->GetArCoreInstallError());
+}
+
 JNIEnv *GetJniEnv() {
   JNIEnv *env;
   jint result = g_vm->AttachCurrentThread(&env, nullptr);

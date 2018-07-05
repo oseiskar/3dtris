@@ -95,6 +95,10 @@ public:
     return game_controller_.getGame().getScore();
   }
 
+  int GetArCoreInstallError() const {
+    return ar_core_install_error_;
+  }
+
 private:
   ArSession* ar_session_ = nullptr;
   ArFrame* ar_frame_ = nullptr;
@@ -103,6 +107,7 @@ private:
   int width_ = 1;
   int height_ = 1;
   int display_rotation_ = 0;
+  int ar_core_install_error_ = 0;
 
   AAssetManager* const asset_manager_;
 
