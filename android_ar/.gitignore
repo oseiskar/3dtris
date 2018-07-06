@@ -5,6 +5,7 @@
 # Gradle configuration.
 .gradle/
 build/
+release/
 
 # User configuration.
 local.properties
