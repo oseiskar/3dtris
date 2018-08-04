@@ -168,7 +168,7 @@ void GameController::updateRotationAnchors() {
     glm::vec4 screen_coords = projection_mat * view_mat * glm::vec4(g.origin + g.r, 1);
     g.r_screen = that->ndcToScreen(glm::vec2(screen_coords.x, screen_coords.y) / screen_coords.w);
 
-    LOGI("r_screen %f %f", g.r_screen.x, g.r_screen.y);
+    LOGD("r_screen %f %f", g.r_screen.x, g.r_screen.y);
     for (Axis ax : rotation_arcs) {
       RotationAnchor::Arc arc;
       arc.rotation_axis = ax;
@@ -176,7 +176,7 @@ void GameController::updateRotationAnchors() {
       glm::vec4 screen_v = projection_mat * view_mat * glm::vec4(g.origin + g.r + arc.dir, 1);
       arc.dir_screen = that->ndcToScreen(glm::vec2(screen_v.x, screen_v.y) / screen_v.w) - g.r_screen;
       g.arcs.push_back(arc);
-      LOGI("dir %d %f %f", ax, arc.dir_screen.x, arc.dir_screen.y);
+      LOGD("dir %d %f %f", ax, arc.dir_screen.x, arc.dir_screen.y);
     }
 
     // longer direction arrow in screen coordinates determines gesture directions
@@ -229,8 +229,8 @@ void GameController::onTap(float x, float y) {
 
   glm::vec3 touch_origin, touch_dir;
   util::GetTouchRay(projection_mat, view_mat, x, y, screen_width, screen_height, touch_origin, touch_dir);
-  //LOGI("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
-  //LOGI("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
+  //LOGD("dir %f %f %f", touch_dir.x, touch_dir.y, touch_dir.z);
+  //LOGD("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
 
   const glm::vec3 game_origin = util::GetTranslation(model_mat);
   const float delta_height = (touch_origin - game_origin).y;
@@ -242,7 +242,7 @@ void GameController::onTap(float x, float y) {
 
     const float hit_x = base_hit.x;
     const float hit_y = -base_hit.z;
-    LOGI("hit %f %f", hit_x, hit_y);
+    LOGD("hit %f %f", hit_x, hit_y);
 
     // determine quadrant
     if (abs(hit_x) > abs(hit_y)) {
@@ -255,12 +255,12 @@ void GameController::onTap(float x, float y) {
 
 
 void GameController::onLongPress(float x, float y) {
-  //LOGI("long press %f %f", x, y);
+  //LOGD("long press %f %f", x, y);
 }
 
 void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   glm::vec2 pos = glm::vec2(x2, y2);
-  //LOGI("scroll pos %f %f", pos.x, pos.y);
+  //LOGD("scroll pos %f %f", pos.x, pos.y);
 
   const float REL = std::min(screen_width, screen_height);
   const float MAX_DISTANCE_TO_ROTATION_ANCHOR = 0.1f * REL;

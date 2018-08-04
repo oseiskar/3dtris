@@ -127,7 +127,7 @@ MainApplication::MainApplication(AAssetManager* asset_manager)
       game_model_mat_(1.0f),
       game_scale_(1.0f)
 {
-  LOGI("OnCreate()");
+  LOGD("OnCreate()");
 }
 
 MainApplication::~MainApplication() {
@@ -138,14 +138,14 @@ MainApplication::~MainApplication() {
 }
 
 void MainApplication::OnPause() {
-  LOGI("OnPause()");
+  LOGD("OnPause()");
   if (ar_session_ != nullptr) {
     ArSession_pause(ar_session_);
   }
 }
 
 void MainApplication::OnResume(void* env, void* context, void* activity) {
-  LOGI("OnResume()");
+  LOGD("OnResume()");
 
   if (ar_session_ == nullptr) {
     ArInstallStatus install_status;
@@ -196,7 +196,7 @@ void MainApplication::OnResume(void* env, void* context, void* activity) {
 }
 
 void MainApplication::OnSurfaceCreated() {
-  LOGI("OnSurfaceCreated()");
+  LOGD("OnSurfaceCreated()");
 
   background_renderer_.InitializeGlContent();
   game_box_renderer_.InitializeGlContent();
@@ -207,7 +207,7 @@ void MainApplication::OnSurfaceCreated() {
 
 void MainApplication::OnDisplayGeometryChanged(int display_rotation,
                                                   int width, int height) {
-  LOGI("OnSurfaceChanged(%d, %d)", width, height);
+  LOGD("OnSurfaceChanged(%d, %d)", width, height);
   glViewport(0, 0, width, height);
   display_rotation_ = display_rotation;
   width_ = width;
@@ -267,7 +267,7 @@ void MainApplication::OnDrawFrame() {
   ArFrame_getTimestamp(ar_session_, ar_frame_, &frame_timestamp);
   bool changed = game_controller_.onFrame(frame_timestamp);
   if (changed) {
-    LOGI("game state changed");
+    LOGD("game state changed");
     game_renderer_.update(game_controller_.getGame(), game_scale_);
   }
 
@@ -418,5 +418,5 @@ void MainApplication::OnScroll(float x1, float y1, float x2, float y2, float dx,
 }
 
 void MainApplication::OnFling(float x1, float y1, float x2, float y2, float vx, float vy) {
-  //LOGI("fling %f %f", x2-x1, y2-y1);
+  //LOGD("fling %f %f", x2-x1, y2-y1);
 }

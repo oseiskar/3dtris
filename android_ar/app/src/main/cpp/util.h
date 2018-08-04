@@ -32,6 +32,11 @@
 #include "arcore_c_api.h"
 #include "glm.h"
 
+#ifndef LOGD
+#define LOGD(...) \
+  __android_log_print(ANDROID_LOG_DEBUG, "3dtris_c", __VA_ARGS__)
+#endif  // LOGD
+
 #ifndef LOGI
 #define LOGI(...) \
   __android_log_print(ANDROID_LOG_INFO, "3dtris_c", __VA_ARGS__)

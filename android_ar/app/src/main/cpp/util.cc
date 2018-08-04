@@ -361,7 +361,7 @@ bool LoadObjFile(AAssetManager* mgr, const std::string& file_name,
 }
 
 void Log4x4Matrix(float raw_matrix[16]) {
-  LOGI(
+  LOGD(
       "%f, %f, %f, %f\n"
       "%f, %f, %f, %f\n"
       "%f, %f, %f, %f\n"
