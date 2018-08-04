@@ -29,7 +29,7 @@ constexpr int64_t MAX_FRAME_TIME = static_cast<int64_t>(0.1 * 1e9);
 GameController::GameController() :
     game(buildGame(getRandomSeedFromTime())),
     state(State::WAITING_FOR_PLANE),
-    prevTimestamp(0),
+    prev_timestamp(0),
     changed_by_controls(false),
     active_anchor_index(-1)
 {}
@@ -80,7 +80,7 @@ void GameController::onBoxFound() {
 bool GameController::onFrame(uint64_t timestamp) {
   bool changed = changed_by_controls;
   if (state == State::RUNNING && !game->isOver()) {
-    int64_t dt = timestamp - prevTimestamp;
+    int64_t dt = timestamp - prev_timestamp;
     if (dt < 0) dt = 0;
     if (dt > MAX_FRAME_TIME) dt = MAX_FRAME_TIME;
     unsigned int dtMilliseconds = static_cast<unsigned int>(dt / 1000000);
@@ -88,7 +88,7 @@ bool GameController::onFrame(uint64_t timestamp) {
     changed = changed || game->tick(dtMilliseconds);
   }
   changed_by_controls = false;
-  prevTimestamp = timestamp;
+  prev_timestamp = timestamp;
   return changed;
 }
 
@@ -306,7 +306,7 @@ void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, 
     anchor.r = cos(ang) * r0 + sin(ang) * v0;;
     anchor.arcs[best_arc_index].dir = -sin(ang) * r0 + cos(ang) * v0;
 
-    active_rotation_anchor = anchor;
+    dragged_rotation_anchor = anchor;
 
     const float ROTATION_THRESHOLD = (float)M_PI*0.25f; // 45 degrees
 
@@ -327,7 +327,7 @@ void GameController::onTouchUp(float x, float y) {
 
 GameController::RotationAnchor GameController::getActiveRotationAnchor() const {
   assert(hasActiveRotationAnchor());
-  return active_rotation_anchor;
+  return dragged_rotation_anchor;
 }
 
 void GameController::moveXY(int dx, int dy) {

@@ -38,18 +38,18 @@ namespace {
       }
     };
 
-    auto makeGimbal = [makeArc](const GameController::RotationAnchor& gimbal) {
-      for (auto arc : gimbal.arcs) {
-        makeArc(gimbal.origin, gimbal.r, arc.dir);
-        makeArc(gimbal.origin, gimbal.r, -arc.dir);
+    auto makeGimbal = [makeArc](const GameController::RotationAnchor& anchor) {
+      for (auto arc : anchor.arcs) {
+        makeArc(anchor.origin, anchor.r, arc.dir);
+        makeArc(anchor.origin, anchor.r, -arc.dir);
       }
     };
 
     if (controller.hasActiveRotationAnchor()) {
       makeGimbal(controller.getActiveRotationAnchor());
     } else {
-      for (auto gimbal : controller.getRotationAnchors()) {
-        makeGimbal(gimbal);
+      for (auto anchor : controller.getRotationAnchors()) {
+        makeGimbal(anchor);
       }
     }
 
