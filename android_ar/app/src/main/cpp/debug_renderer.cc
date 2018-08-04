@@ -6,7 +6,11 @@ namespace {
   const glm::vec4 kColor = {1.0f, 0.0f, 0.0f, 0.5f};
 }  // namespace
 
-DebugRenderer::DebugRenderer() {}
+DebugRenderer *DebugRenderer::instance = nullptr;
+
+DebugRenderer::DebugRenderer() {
+  instance = this;
+}
 
 void DebugRenderer::InitializeGlContent() {
   shader_program_ = util::CreateProgram(LINE_VERTEX_SHADER, LINE_FRAGMENT_SHADER);
@@ -25,6 +29,14 @@ void DebugRenderer::InitializeGlContent() {
 }
 
 void DebugRenderer::setLines(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines) {
+  if (!instance) {
+    LOGD("DebugRenderer disabled");
+  } else {
+    instance->setLinesImpl(lines);
+  }
+}
+
+void DebugRenderer::setLinesImpl(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines) {
   vertices_.clear();
   indices_.clear();
   GLushort i = 0;

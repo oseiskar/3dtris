@@ -25,9 +25,12 @@ public:
   void Draw(const glm::mat4& projection_mat,
             const glm::mat4& view_mat);
 
-  void setLines(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines);
+  static void setLines(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines);
 
 private:
+  static DebugRenderer *instance;
+  void setLinesImpl(const std::vector< std::pair<glm::vec3, glm::vec3> > &lines);
+
   std::vector<GLfloat> vertices_;
   std::vector<GLushort> indices_;
 

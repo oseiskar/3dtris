@@ -107,13 +107,6 @@ namespace {
 
     return lines;
   }
-
-  // one does not simply a + b arrays in C++
-  LineList concat(const LineList &a, const LineList &b) {
-    LineList r = a;
-    r.insert(r.begin(), b.begin(), b.end());
-    return r;
-  }
 }
 
 ControlRenderer::ControlRenderer(const GameController& controller) :

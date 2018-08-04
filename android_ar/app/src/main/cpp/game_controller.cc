@@ -1,6 +1,7 @@
 
 #include "game_controller.h"
 #include "util.h"
+#include "debug_renderer.h"
 
 namespace {
 
@@ -233,15 +234,23 @@ void GameController::onTap(float x, float y) {
   //LOGD("origin %f %f %f", touch_origin.x, touch_origin.y, touch_origin.z);
 
   const glm::vec3 game_origin = util::GetTranslation(model_mat);
+
   const float delta_height = (touch_origin - game_origin).y;
   if (delta_height > 0 && touch_dir.y < 0) {
+    const glm::mat4 rotated_model_mat = this->model_mat * GAME_MODEL_TRANSFORM;
+    const glm::vec3 game_x = util::RotateOnly(rotated_model_mat, glm::vec3(1,0,0));
+    const glm::vec3 game_y = util::RotateOnly(rotated_model_mat, glm::vec3(0,1,0));
+
     const float dist = -delta_height / touch_dir.y;
     const glm::vec3 base_hit = dist*touch_dir + touch_origin - game_origin;
 
-    //debug_renderer_.setLines({ std::make_pair(touch_origin, base_hit + game_origin) });
+    /*DebugRenderer::setLines({
+        std::make_pair(touch_origin, base_hit + game_origin),
+        std::make_pair(game_origin, game_origin + glm::normalize(game_x))
+    });*/
 
-    const float hit_x = base_hit.x;
-    const float hit_y = -base_hit.z;
+    const float hit_x = glm::dot(base_hit, game_x);
+    const float hit_y = glm::dot(base_hit, game_y);
     LOGD("hit %f %f", hit_x, hit_y);
 
     // determine quadrant
