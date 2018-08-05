@@ -73,6 +73,14 @@ bool GameController::hasStarted() const {
   return state >= State::RUNNING;
 }
 
+void GameController::restart() {
+  if (state > State::WAITING_FOR_BOX) {
+    state = State::WAITING_FOR_BOX;
+  }
+  game = buildGame(getRandomSeedFromTime());
+  changed_by_controls = true;
+}
+
 void GameController::onBoxFound() {
   state = State::RUNNING;
   LOGI("GameController: box found, state RUNNING");
@@ -260,11 +268,6 @@ void GameController::onTap(float x, float y) {
       moveXY(0, hit_y > 0 ? 1 : -1);
     }
   } // else no front-face ray intersection
-}
-
-
-void GameController::onLongPress(float x, float y) {
-  //LOGD("long press %f %f", x, y);
 }
 
 void GameController::onScroll(float x1, float y1, float x2, float y2, float dx, float dy) {

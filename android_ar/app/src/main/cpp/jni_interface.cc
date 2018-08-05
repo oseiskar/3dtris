@@ -81,19 +81,15 @@ JNI_METHOD(void, onDisplayGeometryChanged)
       ->OnDisplayGeometryChanged(display_rotation, width, height);
 }
 
-JNI_METHOD(void, onGlSurfaceDrawFrame)
+JNI_METHOD(jboolean, onGlSurfaceDrawFrame)
 (JNIEnv *, jclass, jlong native_application) {
-  native(native_application)->OnDrawFrame();
+  return static_cast<jboolean>(
+      native(native_application)->OnDrawFrame() ? JNI_TRUE : JNI_FALSE);
 }
 
 JNI_METHOD(void, onTap)
 (JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
   native(native_application)->OnTap(x, y);
-}
-
-JNI_METHOD(void, onLongPress)
-(JNIEnv *, jclass, jlong native_application, jfloat x, jfloat y) {
-  native(native_application)->OnLongPress(x, y);
 }
 
 JNI_METHOD(void, onTouchUp)
@@ -104,11 +100,6 @@ JNI_METHOD(void, onTouchUp)
 JNI_METHOD(void, onScroll)
 (JNIEnv *, jclass, jlong native_application, jfloat x1, jfloat y1, jfloat x2, jfloat y2, jfloat dx, jfloat dy) {
   native(native_application)->OnScroll(x1, y1, x2, y2, dx, dy);
-}
-
-JNI_METHOD(void, onFling)
-(JNIEnv *, jclass, jlong native_application, jfloat x1, jfloat y1, jfloat x2, jfloat y2, jfloat vx, jfloat vy) {
-  native(native_application)->OnFling(x1, y1, x2, y2, vx, vy);
 }
 
 JNI_METHOD(jboolean, isTracking)
@@ -127,6 +118,11 @@ JNI_METHOD(jboolean, gameOver)
 (JNIEnv *, jclass, jlong native_application) {
   return static_cast<jboolean>(
       native(native_application)->IsGameOver() ? JNI_TRUE : JNI_FALSE);
+}
+
+JNI_METHOD(void, restartGame)
+(JNIEnv *, jclass, jlong native_application) {
+  native(native_application)->RestartGame();
 }
 
 JNI_METHOD(jint, getScore)

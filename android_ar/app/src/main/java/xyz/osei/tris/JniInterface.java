@@ -31,11 +31,10 @@ public class JniInterface {
       long nativeApplication, int displayRotation, int width, int height);
 
   /** Main render loop, called on the OpenGL thread. */
-  public static native void onGlSurfaceDrawFrame(long nativeApplication);
+  public static native boolean onGlSurfaceDrawFrame(long nativeApplication);
 
   /** OnTouch event, called on the OpenGL thread. */
   public static native void onTap(long nativeApplication, float x, float y);
-  public static native void onLongPress(long nativeApplication, float x, float y);
 
   public static native void onTouchUp(long nativeApplication, float x, float y);
 
@@ -44,14 +43,10 @@ public class JniInterface {
                                      float x2, float y2,
                                      float dx, float dy);
 
-  public static native void onFling(long nativeApplication,
-                                    float x1, float y1,
-                                    float x2, float y2,
-                                    float vx, float vy);
-
   public static native boolean isTracking(long nativeApplication);
   public static native boolean gameStarted(long nativeApplication);
   public static native boolean gameOver(long nativeApplication);
+  public static native void restartGame(long nativeApplication);
   public static native int getScore(long nativeApplication);
   public static native int getArCoreInstallError(long nativeApplication);
 }

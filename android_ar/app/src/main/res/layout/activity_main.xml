@@ -47,4 +47,13 @@
       android:text="000"
       android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
+  <Button
+      android:id="@+id/restart_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"
+      android:layout_centerHorizontal="true"
+      android:layout_marginBottom="50dp"
+      android:text="Restart" />
+
 </RelativeLayout>

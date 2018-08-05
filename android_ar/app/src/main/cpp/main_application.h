@@ -65,20 +65,17 @@ public:
   void OnDisplayGeometryChanged(int display_rotation, int width, int height);
 
   // OnDrawFrame is called on the OpenGL thread to render the next frame.
-  void OnDrawFrame();
+  // returns true if game state has changed since the last frame
+  bool OnDrawFrame();
 
   // OnTap is called on the OpenGL thread after the user touches the screen.
   // @param x: x position on the screen (pixels).
   // @param y: y position on the screen (pixels).
   void OnTap(float x, float y);
 
-  void OnLongPress(float x, float y);
-
   void OnTouchUp(float x, float y);
 
   void OnScroll(float x1, float y1, float x2, float y2, float dx, float dy);
-
-  void OnFling(float x1, float y1, float x2, float y2, float vx, float vy);
 
   // Returns true if any planes have been detected.  Used for hiding the
   // "searching for planes" snackbar.
@@ -90,6 +87,9 @@ public:
   }
   bool IsGameOver() const {
     return game_controller_.getGame().isOver();
+  }
+  void RestartGame() {
+    game_controller_.restart();
   }
   int GetScore() const {
     return game_controller_.getGame().getScore();
@@ -104,6 +104,7 @@ private:
   ArFrame* ar_frame_ = nullptr;
 
   bool install_requested_ = false;
+  bool is_tracking_ok_ = false;
   int width_ = 1;
   int height_ = 1;
   int display_rotation_ = 0;

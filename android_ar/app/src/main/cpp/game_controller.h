@@ -23,6 +23,7 @@ public:
 
   bool getTrackingState() const;
   bool hasStarted() const;
+  void restart();
 
   bool onFrame(uint64_t timestamp);
   void onTrackingState(bool isTracking);
@@ -30,7 +31,6 @@ public:
 
   void setScene(glm::mat4x4 projection, glm::mat4x4 view, glm::mat4x4 model, int w, int h);
   void onTap(float x, float y);
-  void onLongPress(float x, float y);
   void onScroll(float x1, float y1, float x2, float y2, float dx, float dy);
   void onTouchUp(float x, float y);
 

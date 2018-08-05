@@ -29,6 +29,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -55,19 +56,22 @@ public class MainActivity extends AppCompatActivity
 
   private TextView mScoreView;
   private TextView mStatusView;
+  private Button mRestartButton;
   private String mStatusMessage = "";
   private int mScore = -1;
+  private boolean mIsPaused = false;
+  private boolean mGameRunning = false;
 
-  private Handler mTextChangeHandler;
-  private final Runnable mTextChangeRunnable =
+  private Handler mUIRefreshHandler;
+  private final Runnable mUIRefreshRunnable =
         new Runnable() {
             @Override
             public void run() {
                 // The runnable is executed on main UI thread.
                 try {
-                    refreshTexts();
-                    mTextChangeHandler.postDelayed(
-                            mTextChangeRunnable, TEXT_UPDATE_INTERVAL_MILLIS);
+                    if (!mIsPaused) {
+                        refreshUI();
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                 }
@@ -75,9 +79,25 @@ public class MainActivity extends AppCompatActivity
         };
 
 
-  private void refreshTexts() {
+  private void refreshUI() {
     final String text = getStatusMessage(mNativeApplication);
     final int score = JniInterface.getScore(mNativeApplication);
+    final boolean nowRunning = !JniInterface.gameOver(mNativeApplication);
+
+    if (nowRunning != mGameRunning) {
+      if (nowRunning) {
+        // on start
+        mRestartButton.setVisibility(View.GONE);
+        mScoreView.setVisibility(View.VISIBLE);
+      } else {
+        // on end
+        mRestartButton.setVisibility(View.VISIBLE);
+        mScoreView.setVisibility(View.GONE);
+      }
+      mGameRunning = nowRunning;
+      refreshSystemUiVisibility();
+    }
+
     if (!text.equals(mStatusMessage)) {
       if (text.isEmpty()) {
         mStatusView.setVisibility(View.GONE);
@@ -116,7 +136,7 @@ public class MainActivity extends AppCompatActivity
     if (JniInterface.isTracking(nativeApplication)) {
       if (JniInterface.gameStarted(nativeApplication)) {
         if (JniInterface.gameOver(nativeApplication)) {
-          return "Game over";
+          return "Game over, score " + JniInterface.getScore(nativeApplication);
         } else {
           return "";
         }
@@ -132,6 +152,10 @@ public class MainActivity extends AppCompatActivity
     }
   }
 
+  private void restartGame() {
+    JniInterface.restartGame(mNativeApplication);
+  }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -139,6 +163,16 @@ public class MainActivity extends AppCompatActivity
     mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
     mScoreView = (TextView) findViewById(R.id.scoreview);
     mStatusView = (TextView) findViewById(R.id.statusview);
+    mRestartButton = (Button) findViewById(R.id.restart_button);
+
+    mRestartButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            restartGame();
+        }
+    });
+
+    mRestartButton.setVisibility(View.GONE);
 
     // Set up tap listener.
     mGestureDetector =
@@ -190,34 +224,6 @@ public class MainActivity extends AppCompatActivity
                 return true;
               }
 
-              /*@Override
-              public boolean onFling(final MotionEvent e1,
-                                     final MotionEvent e2,
-                                     final float vx, final float vy) {
-                mSurfaceView.queueEvent(
-                        new Runnable() {
-                          @Override
-                          public void run() {
-                            JniInterface.onFling(mNativeApplication,
-                                    e1.getX(), e1.getY(),
-                                    e2.getX(), e2.getY(),
-                                    vx, vy);
-                          }
-                        });
-                return true;
-              }
-
-              @Override
-              public void onLongPress(final MotionEvent e) {
-                  mSurfaceView.queueEvent(
-                          new Runnable() {
-                              @Override
-                              public void run() {
-                                  JniInterface.onLongPress(mNativeApplication, e.getX(), e.getY());
-                              }
-                          });
-              }*/
-
               @Override
               public boolean onDown(MotionEvent e) {
                 return true;
@@ -255,7 +261,7 @@ public class MainActivity extends AppCompatActivity
     JniInterface.assetManager = getAssets();
     mNativeApplication = JniInterface.createNativeApplication(getAssets());
 
-    mTextChangeHandler = new Handler();
+    mUIRefreshHandler = new Handler();
   }
 
   @Override
@@ -270,8 +276,9 @@ public class MainActivity extends AppCompatActivity
 
     JniInterface.onResume(mNativeApplication, getApplicationContext(), this);
     mSurfaceView.onResume();
+    mIsPaused = false;
 
-    mTextChangeHandler.postDelayed(mTextChangeRunnable, TEXT_UPDATE_INTERVAL_MILLIS);
+    mUIRefreshRunnable.run();
 
     // Listen to display changed events to detect 180° rotation, which does not cause a config
     // change or view resize.
@@ -283,9 +290,7 @@ public class MainActivity extends AppCompatActivity
     super.onPause();
     mSurfaceView.onPause();
     JniInterface.onPause(mNativeApplication);
-
-      mTextChangeHandler.removeCallbacks(mTextChangeRunnable);
-
+    mIsPaused = true;
     getSystemService(DisplayManager.class).unregisterDisplayListener(this);
   }
 
@@ -300,20 +305,29 @@ public class MainActivity extends AppCompatActivity
     }
   }
 
+  private void refreshSystemUiVisibility() {
+    final int flags;
+
+    if (mGameRunning) {
+      // Standard Android full-screen functionality.
+      flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+    } else {
+      flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+    }
+
+    getWindow().getDecorView().setSystemUiVisibility(flags);
+  }
+
   @Override
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     if (hasFocus) {
-      // Standard Android full-screen functionality.
-      getWindow()
-          .getDecorView()
-          .setSystemUiVisibility(
-              View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                  | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                  | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                  | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                  | View.SYSTEM_UI_FLAG_FULLSCREEN
-                  | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+      refreshSystemUiVisibility();
       getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
   }
@@ -333,6 +347,7 @@ public class MainActivity extends AppCompatActivity
 
   @Override
   public void onDrawFrame(GL10 gl) {
+    final boolean changed;
     // Synchronized to avoid racing onDestroy.
     synchronized (this) {
       if (mNativeApplication == 0) {
@@ -344,7 +359,10 @@ public class MainActivity extends AppCompatActivity
             mNativeApplication, displayRotation, mViewportWidth, mViewportHeight);
         mViewportChanged = false;
       }
-      JniInterface.onGlSurfaceDrawFrame(mNativeApplication);
+      changed = JniInterface.onGlSurfaceDrawFrame(mNativeApplication);
+    }
+    if (changed) {
+      mUIRefreshHandler.post(mUIRefreshRunnable);
     }
   }
 

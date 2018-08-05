@@ -217,7 +217,7 @@ void MainApplication::OnDisplayGeometryChanged(int display_rotation,
   }
 }
 
-void MainApplication::OnDrawFrame() {
+bool MainApplication::OnDrawFrame() {
   // Render the scene.
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -227,9 +227,13 @@ void MainApplication::OnDrawFrame() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  bool changed = false;
+
   if (ar_session_ == nullptr) {
     game_controller_.onTrackingState(false);
-    return;
+    changed = is_tracking_ok_;
+    is_tracking_ok_ = false;
+    return changed;
   }
   ArSession_setCameraTextureName(ar_session_,
                                  background_renderer_.GetTextureId());
@@ -260,16 +264,21 @@ void MainApplication::OnDrawFrame() {
   // If the camera isn't tracking don't bother rendering other objects.
   if (camera_tracking_state != AR_TRACKING_STATE_TRACKING) {
     game_controller_.onTrackingState(false);
-    return;
+    changed = changed || is_tracking_ok_;
+    is_tracking_ok_ = false;
+    return changed;
   }
 
   int64_t frame_timestamp;
   ArFrame_getTimestamp(ar_session_, ar_frame_, &frame_timestamp);
-  bool changed = game_controller_.onFrame(frame_timestamp);
+  changed = game_controller_.onFrame(frame_timestamp);
   if (changed) {
     LOGD("game state changed");
     game_renderer_.update(game_controller_.getGame(), game_scale_);
   }
+
+  changed = changed || !is_tracking_ok_;
+  is_tracking_ok_ = false;
 
   //debug_renderer_.Draw(projection_mat, view_mat);
 
@@ -375,6 +384,8 @@ void MainApplication::OnDrawFrame() {
           return false;
         });
   }
+
+  return changed;
 }
 
 void MainApplication::OnTap(float x, float y) {
@@ -404,19 +415,8 @@ void MainApplication::OnTouchUp(float x, float y) {
     game_controller_.onTouchUp(x, y);
   }
 }
-
-void MainApplication::OnLongPress(float x, float y) {
-  if (game_controller_.hasStarted()) {
-    game_controller_.onLongPress(x, y);
-  }
-}
-
 void MainApplication::OnScroll(float x1, float y1, float x2, float y2, float dx, float dy) {
   if (game_controller_.hasStarted()) {
     game_controller_.onScroll(x1, y1, x2, y2, dx, dy);
   }
-}
-
-void MainApplication::OnFling(float x1, float y1, float x2, float y2, float vx, float vy) {
-  //LOGD("fling %f %f", x2-x1, y2-y1);
 }
