@@ -32,6 +32,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -40,354 +41,357 @@ import javax.microedition.khronos.opengles.GL10;
  * ARCore C API.
  */
 public class MainActivity extends AppCompatActivity
-    implements GLSurfaceView.Renderer, DisplayManager.DisplayListener {
-  private static final String TAG = MainActivity.class.getSimpleName();
-  private static final int TEXT_UPDATE_INTERVAL_MILLIS = 100; // In milliseconds.
+        implements GLSurfaceView.Renderer, DisplayManager.DisplayListener {
 
-  private GLSurfaceView mSurfaceView;
+    private static final String TAG = MainActivity.class.getSimpleName();
 
-  private boolean mViewportChanged = false;
-  private int mViewportWidth;
-  private int mViewportHeight;
+    private GLSurfaceView mSurfaceView;
 
-  // Opaque native pointer to the native application instance.
-  private long mNativeApplication;
-  private GestureDetector mGestureDetector;
+    private boolean mViewportChanged = false;
+    private int mViewportWidth;
+    private int mViewportHeight;
 
-  private TextView mScoreView;
-  private TextView mStatusView;
-  private Button mRestartButton;
-  private String mStatusMessage = "";
-  private int mScore = -1;
-  private boolean mIsPaused = false;
-  private boolean mGameRunning = false;
+    // Opaque native pointer to the native application instance.
+    private long mNativeApplication;
+    private GestureDetector mGestureDetector;
 
-  private Handler mUIRefreshHandler;
-  private final Runnable mUIRefreshRunnable =
-        new Runnable() {
-            @Override
-            public void run() {
-                // The runnable is executed on main UI thread.
-                try {
-                    if (!mIsPaused) {
-                        refreshUI();
+    private TextView mScoreView;
+    private TextView mStatusView;
+    private Button mRestartButton;
+    private String mStatusMessage = "";
+    private int mScore = -1;
+    private boolean mIsPaused = false;
+    private boolean mGameRunning = false;
+
+    private Handler mUIRefreshHandler;
+    private final Runnable mUIRefreshRunnable =
+            new Runnable() {
+                @Override
+                public void run() {
+                    // The runnable is executed on main UI thread.
+                    try {
+                        if (!mIsPaused) {
+                            refreshUI();
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, e.getMessage());
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
                 }
+            };
+
+
+    private void refreshUI() {
+        final String text = getStatusMessage(mNativeApplication);
+        final int score = JniInterface.getScore(mNativeApplication);
+        final boolean nowRunning = !JniInterface.gameOver(mNativeApplication);
+
+        if (nowRunning != mGameRunning) {
+            if (nowRunning) {
+                // on start
+                mRestartButton.setVisibility(View.GONE);
+                mScoreView.setVisibility(View.VISIBLE);
+            } else {
+                // on end
+                mRestartButton.setVisibility(View.VISIBLE);
+                mScoreView.setVisibility(View.GONE);
             }
-        };
+            mGameRunning = nowRunning;
+            refreshSystemUiVisibility();
+        }
 
+        if (!text.equals(mStatusMessage)) {
+            if (text.isEmpty()) {
+                mStatusView.setVisibility(View.GONE);
+            } else {
+                mStatusView.setVisibility(View.VISIBLE);
+                mStatusView.setText(text);
+            }
+            mStatusMessage = text;
+        }
 
-  private void refreshUI() {
-    final String text = getStatusMessage(mNativeApplication);
-    final int score = JniInterface.getScore(mNativeApplication);
-    final boolean nowRunning = !JniInterface.gameOver(mNativeApplication);
-
-    if (nowRunning != mGameRunning) {
-      if (nowRunning) {
-        // on start
-        mRestartButton.setVisibility(View.GONE);
-        mScoreView.setVisibility(View.VISIBLE);
-      } else {
-        // on end
-        mRestartButton.setVisibility(View.VISIBLE);
-        mScoreView.setVisibility(View.GONE);
-      }
-      mGameRunning = nowRunning;
-      refreshSystemUiVisibility();
+        if (score != mScore) {
+            mScore = score;
+            mScoreView.setText("" + mScore);
+        }
     }
 
-    if (!text.equals(mStatusMessage)) {
-      if (text.isEmpty()) {
-        mStatusView.setVisibility(View.GONE);
-      } else {
-        mStatusView.setVisibility(View.VISIBLE);
-        mStatusView.setText(text);
-      }
-      mStatusMessage = text;
-    }
+    private static String getStatusMessage(long nativeApplication) {
+        final int arCoreErrorCode = JniInterface.getArCoreInstallError(nativeApplication);
+        // "somewhat graceful" and "reasonable behavior"
+        switch (arCoreErrorCode) {
+            case 0:
+                break; // AR_SUCCESS
+            case -101: // AR_UNAVAILABLE_DEVICE_NOT_COMPATIBLE:
+                return "Sorry, your phone does not support ARCore :,(";
+            case -105: // AR_UNAVAILABLE_USER_DECLINED_INSTALLATION:
+                return "You must install ARCore to play this AR game";
+            case -103: // AR_UNAVAILABLE_APK_TOO_OLD:
+                return "Please update ARCore";
+            case -104: // AR_UNAVAILABLE_SDK_TOO_OLD:
+                return "An ARCore update broke this app (AR_UNAVAILABLE_SDK_TOO_OLD), blame Google";
+            case -9: // AR_ERROR_CAMERA_PERMISSION_NOT_GRANTED:
+                return "No Camera permission, how did that happen?";
+            default:
+                return "ARCore is FUBAR (error " + arCoreErrorCode + ")";
+        }
 
-    if (score != mScore) {
-      mScore = score;
-      mScoreView.setText("" + mScore);
-    }
-  }
-
-  private static String getStatusMessage(long nativeApplication) {
-    final int arCoreErrorCode = JniInterface.getArCoreInstallError(nativeApplication);
-    // "somewhat graceful" and "reasonable behavior"
-    switch (arCoreErrorCode) {
-        case 0: break; // AR_SUCCESS
-        case -101: // AR_UNAVAILABLE_DEVICE_NOT_COMPATIBLE:
-            return "Sorry, your phone does not support ARCore :,(";
-        case -105: // AR_UNAVAILABLE_USER_DECLINED_INSTALLATION:
-            return "You must install ARCore to play this AR game";
-        case -103: // AR_UNAVAILABLE_APK_TOO_OLD:
-            return "Please update ARCore";
-        case -104: // AR_UNAVAILABLE_SDK_TOO_OLD:
-            return "An ARCore update broke this app (AR_UNAVAILABLE_SDK_TOO_OLD), blame Google";
-        case -9: // AR_ERROR_CAMERA_PERMISSION_NOT_GRANTED:
-            return"No Camera permission, how did that happen?";
-        default:
-            return "ARCore is FUBAR (error " +  arCoreErrorCode + ")";
-    }
-
-    if (JniInterface.isTracking(nativeApplication)) {
-      if (JniInterface.gameStarted(nativeApplication)) {
-        if (JniInterface.gameOver(nativeApplication)) {
-          return "Game over, score " + JniInterface.getScore(nativeApplication);
+        if (JniInterface.isTracking(nativeApplication)) {
+            if (JniInterface.gameStarted(nativeApplication)) {
+                if (JniInterface.gameOver(nativeApplication)) {
+                    return "Game over, score " + JniInterface.getScore(nativeApplication);
+                } else {
+                    return "";
+                }
+            } else {
+                return "Tap to place & start";
+            }
         } else {
-          return "";
-        }
-      } else {
-        return "Tap to place & start";
-      }
-    } else {
-      if (JniInterface.gameStarted(nativeApplication)) {
-        return "Tracking lost :(";
-      } else {
-        return "Searching for surfaces...";
-      }
-    }
-  }
-
-  private void restartGame() {
-    JniInterface.restartGame(mNativeApplication);
-  }
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-    mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
-    mScoreView = (TextView) findViewById(R.id.scoreview);
-    mStatusView = (TextView) findViewById(R.id.statusview);
-    mRestartButton = (Button) findViewById(R.id.restart_button);
-
-    mRestartButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            restartGame();
-        }
-    });
-
-    mRestartButton.setVisibility(View.GONE);
-
-    // Set up tap listener.
-    mGestureDetector =
-        new GestureDetector(
-            this,
-            new GestureDetector.SimpleOnGestureListener() {
-              @Override
-              public boolean onSingleTapUp(final MotionEvent e) {
-                mSurfaceView.queueEvent(
-                    new Runnable() {
-                      @Override
-                      public void run() {
-                        JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
-                      }
-                    });
-                return true;
-              }
-
-              @Override
-              public boolean onDoubleTapEvent(final MotionEvent e) {
-                if(e.getAction() != MotionEvent.ACTION_UP) {
-                  return false;  // Don't do anything for other actions
-                }
-
-                mSurfaceView.queueEvent(
-                        new Runnable() {
-                          @Override
-                          public void run() {
-                            JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
-                          }
-                        });
-                return true;
-              }
-
-              @Override
-              public boolean onScroll(final MotionEvent e1,
-                                      final MotionEvent e2,
-                                      final float dx, final float dy) {
-                mSurfaceView.queueEvent(
-                        new Runnable() {
-                          @Override
-                          public void run() {
-                            JniInterface.onScroll(mNativeApplication,
-                                    e1.getX(), e1.getY(),
-                                    e2.getX(), e2.getY(),
-                                    dx, dy);
-                          }
-                        });
-                return true;
-              }
-
-              @Override
-              public boolean onDown(MotionEvent e) {
-                return true;
-              }
-            });
-
-    mSurfaceView.setOnTouchListener(
-        new View.OnTouchListener() {
-          @Override
-          public boolean onTouch(View v, final MotionEvent event) {
-
-            // deliver lower-level touch up events separately to handle scroll stops
-            if(event.getAction() == MotionEvent.ACTION_UP) {
-              mSurfaceView.queueEvent(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                JniInterface.onTouchUp(mNativeApplication,
-                                        event.getX(), event.getY());
-                            }
-                        });
+            if (JniInterface.gameStarted(nativeApplication)) {
+                return "Tracking lost :(";
+            } else {
+                return "Searching for surfaces...";
             }
-            return mGestureDetector.onTouchEvent(event);
-          }
+        }
+    }
 
+    private void restartGame() {
+        JniInterface.restartGame(mNativeApplication);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
+        mScoreView = (TextView) findViewById(R.id.scoreview);
+        mStatusView = (TextView) findViewById(R.id.statusview);
+        mRestartButton = (Button) findViewById(R.id.restart_button);
+
+        mRestartButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                restartGame();
+            }
         });
 
-    // Set up renderer.
-    mSurfaceView.setPreserveEGLContextOnPause(true);
-    mSurfaceView.setEGLContextClientVersion(2);
-    mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
-    mSurfaceView.setRenderer(this);
-    mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        mRestartButton.setVisibility(View.GONE);
 
-    JniInterface.assetManager = getAssets();
-    mNativeApplication = JniInterface.createNativeApplication(getAssets());
+        // Set up tap listener.
+        mGestureDetector =
+                new GestureDetector(
+                        this,
+                        new GestureDetector.SimpleOnGestureListener() {
+                            @Override
+                            public boolean onSingleTapUp(final MotionEvent e) {
+                                mSurfaceView.queueEvent(
+                                        new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
+                                            }
+                                        });
+                                return true;
+                            }
 
-    mUIRefreshHandler = new Handler();
-  }
+                            @Override
+                            public boolean onDoubleTapEvent(final MotionEvent e) {
+                                if (e.getAction() != MotionEvent.ACTION_UP) {
+                                    return false;  // Don't do anything for other actions
+                                }
 
-  @Override
-  protected void onResume() {
-    super.onResume();
-    // ARCore requires camera permissions to operate. If we did not yet obtain runtime
-    // permission on Android M and above, now is a good time to ask the user for it.
-    if (!CameraPermissionHelper.hasCameraPermission(this)) {
-      CameraPermissionHelper.requestCameraPermission(this);
-      return;
+                                mSurfaceView.queueEvent(
+                                        new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                JniInterface.onTap(mNativeApplication, e.getX(), e.getY());
+                                            }
+                                        });
+                                return true;
+                            }
+
+                            @Override
+                            public boolean onScroll(final MotionEvent e1,
+                                                    final MotionEvent e2,
+                                                    final float dx, final float dy) {
+                                mSurfaceView.queueEvent(
+                                        new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                JniInterface.onScroll(mNativeApplication,
+                                                        e1.getX(), e1.getY(),
+                                                        e2.getX(), e2.getY(),
+                                                        dx, dy);
+                                            }
+                                        });
+                                return true;
+                            }
+
+                            @Override
+                            public boolean onDown(MotionEvent e) {
+                                return true;
+                            }
+                        });
+
+        mSurfaceView.setOnTouchListener(
+                new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, final MotionEvent event) {
+
+                        // deliver lower-level touch up events separately to handle scroll stops
+                        if (event.getAction() == MotionEvent.ACTION_UP) {
+                            mSurfaceView.queueEvent(
+                                    new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            JniInterface.onTouchUp(mNativeApplication,
+                                                    event.getX(), event.getY());
+                                        }
+                                    });
+                        }
+                        return mGestureDetector.onTouchEvent(event);
+                    }
+
+                });
+
+        // Set up renderer.
+        mSurfaceView.setPreserveEGLContextOnPause(true);
+        mSurfaceView.setEGLContextClientVersion(2);
+        mSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        mSurfaceView.setRenderer(this);
+        mSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+
+        JniInterface.assetManager = getAssets();
+        mNativeApplication = JniInterface.createNativeApplication(getAssets());
+
+        mUIRefreshHandler = new Handler();
     }
 
-    JniInterface.onResume(mNativeApplication, getApplicationContext(), this);
-    mSurfaceView.onResume();
-    mIsPaused = false;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // ARCore requires camera permissions to operate. If we did not yet obtain runtime
+        // permission on Android M and above, now is a good time to ask the user for it.
+        if (!CameraPermissionHelper.hasCameraPermission(this)) {
+            CameraPermissionHelper.requestCameraPermission(this);
+            return;
+        }
 
-    mUIRefreshRunnable.run();
+        JniInterface.onResume(mNativeApplication, getApplicationContext(), this);
+        mSurfaceView.onResume();
+        mIsPaused = false;
 
-    // Listen to display changed events to detect 180° rotation, which does not cause a config
-    // change or view resize.
-    getSystemService(DisplayManager.class).registerDisplayListener(this, null);
-  }
+        mUIRefreshRunnable.run();
 
-  @Override
-  public void onPause() {
-    super.onPause();
-    mSurfaceView.onPause();
-    JniInterface.onPause(mNativeApplication);
-    mIsPaused = true;
-    getSystemService(DisplayManager.class).unregisterDisplayListener(this);
-  }
-
-  @Override
-  public void onDestroy() {
-    super.onDestroy();
-
-    // Synchronized to avoid racing onDrawFrame.
-    synchronized (this) {
-      JniInterface.destroyNativeApplication(mNativeApplication);
-      mNativeApplication = 0;
-    }
-  }
-
-  private void refreshSystemUiVisibility() {
-    final int flags;
-
-    if (mGameRunning) {
-      // Standard Android full-screen functionality.
-      flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-    } else {
-      flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        // Listen to display changed events to detect 180° rotation, which does not cause a config
+        // change or view resize.
+        getSystemService(DisplayManager.class).registerDisplayListener(this, null);
     }
 
-    getWindow().getDecorView().setSystemUiVisibility(flags);
-  }
-
-  @Override
-  public void onWindowFocusChanged(boolean hasFocus) {
-    super.onWindowFocusChanged(hasFocus);
-    if (hasFocus) {
-      refreshSystemUiVisibility();
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    @Override
+    public void onPause() {
+        super.onPause();
+        mSurfaceView.onPause();
+        JniInterface.onPause(mNativeApplication);
+        mIsPaused = true;
+        getSystemService(DisplayManager.class).unregisterDisplayListener(this);
     }
-  }
 
-  @Override
-  public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-    GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    JniInterface.onGlSurfaceCreated(mNativeApplication);
-  }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
 
-  @Override
-  public void onSurfaceChanged(GL10 gl, int width, int height) {
-    mViewportWidth = width;
-    mViewportHeight = height;
-    mViewportChanged = true;
-  }
-
-  @Override
-  public void onDrawFrame(GL10 gl) {
-    final boolean changed;
-    // Synchronized to avoid racing onDestroy.
-    synchronized (this) {
-      if (mNativeApplication == 0) {
-        return;
-      }
-      if (mViewportChanged) {
-        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
-        JniInterface.onDisplayGeometryChanged(
-            mNativeApplication, displayRotation, mViewportWidth, mViewportHeight);
-        mViewportChanged = false;
-      }
-      changed = JniInterface.onGlSurfaceDrawFrame(mNativeApplication);
+        // Synchronized to avoid racing onDrawFrame.
+        synchronized (this) {
+            JniInterface.destroyNativeApplication(mNativeApplication);
+            mNativeApplication = 0;
+        }
     }
-    if (changed) {
-      mUIRefreshHandler.post(mUIRefreshRunnable);
+
+    private void refreshSystemUiVisibility() {
+        final int flags;
+
+        if (mGameRunning) {
+            // Standard Android full-screen functionality.
+            flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        } else {
+            flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        }
+
+        getWindow().getDecorView().setSystemUiVisibility(flags);
     }
-  }
 
-  @Override
-  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
-    if (!CameraPermissionHelper.hasCameraPermission(this)) {
-      Toast.makeText(this, "Camera permission is needed to run this application", Toast.LENGTH_LONG)
-          .show();
-      if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
-        // Permission denied with checking "Do not ask again".
-        CameraPermissionHelper.launchPermissionSettings(this);
-      }
-      finish();
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            refreshSystemUiVisibility();
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
     }
-  }
 
-  // DisplayListener methods
-  @Override
-  public void onDisplayAdded(int displayId) {}
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        JniInterface.onGlSurfaceCreated(mNativeApplication);
+    }
 
-  @Override
-  public void onDisplayRemoved(int displayId) {}
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+        mViewportWidth = width;
+        mViewportHeight = height;
+        mViewportChanged = true;
+    }
 
-  @Override
-  public void onDisplayChanged(int displayId) {
-    mViewportChanged = true;
-  }
+    @Override
+    public void onDrawFrame(GL10 gl) {
+        final boolean changed;
+        // Synchronized to avoid racing onDestroy.
+        synchronized (this) {
+            if (mNativeApplication == 0) {
+                return;
+            }
+            if (mViewportChanged) {
+                int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
+                JniInterface.onDisplayGeometryChanged(
+                        mNativeApplication, displayRotation, mViewportWidth, mViewportHeight);
+                mViewportChanged = false;
+            }
+            changed = JniInterface.onGlSurfaceDrawFrame(mNativeApplication);
+        }
+        if (changed) {
+            mUIRefreshHandler.post(mUIRefreshRunnable);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (!CameraPermissionHelper.hasCameraPermission(this)) {
+            Toast.makeText(this, "Camera permission is needed to run this application", Toast.LENGTH_LONG)
+                    .show();
+            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
+                // Permission denied with checking "Do not ask again".
+                CameraPermissionHelper.launchPermissionSettings(this);
+            }
+            finish();
+        }
+    }
+
+    // DisplayListener methods
+    @Override
+    public void onDisplayAdded(int displayId) {
+    }
+
+    @Override
+    public void onDisplayRemoved(int displayId) {
+    }
+
+    @Override
+    public void onDisplayChanged(int displayId) {
+        mViewportChanged = true;
+    }
 }
