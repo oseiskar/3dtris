@@ -17,8 +17,8 @@ android {
         // 24 is the minimum since ARCore only works with 24 and higher.
         minSdkVersion 24
         targetSdkVersion 27
-        versionCode 1
-        versionName "0.9-beta"
+        versionCode 2
+        versionName "1.0.0"
 
         externalNativeBuild {
             cmake {
