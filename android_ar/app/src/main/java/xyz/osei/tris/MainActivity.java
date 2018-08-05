@@ -18,6 +18,7 @@
 
 package xyz.osei.tris;
 
+import android.content.SharedPreferences;
 import android.hardware.display.DisplayManager;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -56,12 +57,14 @@ public class MainActivity extends AppCompatActivity
     private GestureDetector mGestureDetector;
 
     private TextView mScoreView;
+    private TextView mHiscoreView;
     private TextView mStatusView;
     private Button mRestartButton;
     private String mStatusMessage = "";
     private int mScore = -1;
     private boolean mIsPaused = false;
     private boolean mGameRunning = false;
+    private SharedPreferences mSharedPreferences;
 
     private Handler mUIRefreshHandler;
     private final Runnable mUIRefreshRunnable =
@@ -90,10 +93,13 @@ public class MainActivity extends AppCompatActivity
                 // on start
                 mRestartButton.setVisibility(View.GONE);
                 mScoreView.setVisibility(View.VISIBLE);
+                mHiscoreView.setVisibility(View.GONE);
             } else {
                 // on end
                 mRestartButton.setVisibility(View.VISIBLE);
                 mScoreView.setVisibility(View.GONE);
+                mHiscoreView.setText(computeScoreText());
+                mHiscoreView.setVisibility(View.VISIBLE);
             }
             mGameRunning = nowRunning;
             refreshSystemUiVisibility();
@@ -113,6 +119,25 @@ public class MainActivity extends AppCompatActivity
             mScore = score;
             mScoreView.setText("" + mScore);
         }
+    }
+
+    private String computeScoreText() {
+        final int finalScore = JniInterface.getScore(mNativeApplication);
+        final int oldHiscore = getHiscore();
+        if (finalScore > oldHiscore) {
+            storeHiscore(finalScore);
+            return "Score " + finalScore + ", new record!";
+        }
+        return  "Score: " + finalScore + " / " +
+                "Record: " + oldHiscore;
+    }
+
+    private int getHiscore() {
+        return mSharedPreferences.getInt("hiscore", 0);
+    }
+
+    private void storeHiscore(int newHiscore) {
+        mSharedPreferences.edit().putInt("hiscore", newHiscore).apply();
     }
 
     private static String getStatusMessage(long nativeApplication) {
@@ -138,7 +163,7 @@ public class MainActivity extends AppCompatActivity
         if (JniInterface.isTracking(nativeApplication)) {
             if (JniInterface.gameStarted(nativeApplication)) {
                 if (JniInterface.gameOver(nativeApplication)) {
-                    return "Game over, score " + JniInterface.getScore(nativeApplication);
+                    return "Game over";
                 } else {
                     return "";
                 }
@@ -164,8 +189,10 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         mSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceview);
         mScoreView = (TextView) findViewById(R.id.scoreview);
+        mHiscoreView = (TextView) findViewById(R.id.hiscoreview);
         mStatusView = (TextView) findViewById(R.id.statusview);
         mRestartButton = (Button) findViewById(R.id.restart_button);
+        mSharedPreferences = getPreferences(MODE_PRIVATE);
 
         mRestartButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,6 +202,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         mRestartButton.setVisibility(View.GONE);
+        mHiscoreView.setVisibility(View.GONE);
 
         // Set up tap listener.
         mGestureDetector =
