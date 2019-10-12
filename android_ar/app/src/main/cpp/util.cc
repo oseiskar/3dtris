@@ -413,13 +413,13 @@ void GetTouchRay(const glm::mat4x4 projection_mat, const glm::mat4x4 view_mat,
 
   const glm::mat4 inv_view = glm::inverse(view_mat);
 
-  const glm::vec4 v = inv_view
-                      * glm::inverse(projection_mat)
-                      * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
-  const glm::vec3 v3(v.x, v.y, v.z);
+  // "View Space Wrong W coordinate"
+  const glm::vec4 vswwc = glm::inverse(projection_mat) * glm::vec4(x_ndc, y_ndc, 1.0, 1.0);
+  // set w = 0 to ignore transformation
+  const glm::vec4 v = inv_view * glm::vec4(vswwc.x, vswwc.y, vswwc.z, 0.0);
 
-  dir = v3 / glm::length(v3);
   origin = GetTranslation(inv_view);
+  dir = glm::normalize(glm::vec3(v.x, v.y, v.z));
 }
 
 }  // namespace util
