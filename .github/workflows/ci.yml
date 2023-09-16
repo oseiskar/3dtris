@@ -33,5 +33,5 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Signed app bundle
-        path: ${{steps.sign_app.outputs.signedReleaseFile}}
+        path: android_ar/${{steps.sign_app.outputs.signedReleaseFile}}
         retention-days: 1
