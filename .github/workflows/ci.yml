@@ -24,7 +24,7 @@ jobs:
       name: Sign app APK
       id: sign_app
       with:
-        releaseDirectory: app/build/outputs/bundle/release
+        releaseDirectory: android_ar/app/build/outputs/bundle/release
         signingKeyBase64: ${{ secrets.SIGNING_KEY }}
         # key/store passwords are redundant security layers in this context
         alias: upload-self-cert
@@ -33,5 +33,5 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: Signed app bundle
-        path: android_ar/${{steps.sign_app.outputs.signedReleaseFile}}
+        path: ${{steps.sign_app.outputs.signedReleaseFile}}
         retention-days: 1
