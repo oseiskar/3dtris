@@ -45,9 +45,9 @@ add_library(main_native SHARED
 target_include_directories(main_native PRIVATE
            src/main/cpp
             ${ARCORE_INCLUDE}
-            ${ANDROID_NDK}/sources/third_party/vulkan/src/libs/glm
             src/main/cpp/game/include
-            src/main/cpp/vendor)
+            src/main/cpp/vendor
+            src/main/cpp/vendor/glm/glm)
 
 target_link_libraries(main_native
                       android

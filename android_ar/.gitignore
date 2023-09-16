@@ -3,6 +3,7 @@ play_store_images/
 # Android Studio configuration.
 *.iml
 .idea/
+.cxx/
 
 # Gradle configuration.
 .gradle/
