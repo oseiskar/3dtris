@@ -10,7 +10,7 @@ def arcore_libpath = "${buildDir}/arcore-native"
 configurations { natives }
 
 android {
-    compileSdk 34
+    compileSdkVersion 34
     defaultConfig {
         applicationId "xyz.osei.tris"
 
